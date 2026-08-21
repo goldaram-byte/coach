@@ -141,7 +141,7 @@ function BuilderInner() {
       blocks: blocks.filter((b) => b.exercises.length > 0 || b.name.trim()),
     };
     addWorkout(workout);
-    router.push(`/workouts/${workout.id}`);
+    router.push(`/workout?id=${workout.id}`);
   };
 
   const pickerList = exercises.filter((e) => {

@@ -56,15 +56,15 @@ export default function WorkoutCard({
         <div className="flex gap-2 w-full sm:w-auto">
           {workout.status === 'planned' ? (
             <>
-              <Link href={`/workouts/${workout.id}`} className="btn-secondary flex-1 sm:flex-none no-underline">
+              <Link href={`/workout?id=${workout.id}`} className="btn-secondary flex-1 sm:flex-none no-underline">
                 Открыть
               </Link>
-              <Link href={`/workouts/${workout.id}/run`} className="btn-primary flex-1 sm:flex-none no-underline">
+              <Link href={`/run?id=${workout.id}`} className="btn-primary flex-1 sm:flex-none no-underline">
                 <Play className="w-4 h-4" /> Начать
               </Link>
             </>
           ) : (
-            <Link href={`/workouts/${workout.id}`} className="btn-secondary flex-1 sm:flex-none no-underline">
+            <Link href={`/workout?id=${workout.id}`} className="btn-secondary flex-1 sm:flex-none no-underline">
               Открыть
             </Link>
           )}

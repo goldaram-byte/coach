@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Target, Moon, Plus, CalendarDays } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
 import { useAppStore } from '@/store/appStore';
@@ -19,14 +19,14 @@ import {
 import { weekdayDate } from '@/lib/seed';
 import { TrainingMonthPlan, TrainingWeekPlan } from '@/lib/types';
 
-export default function ProgramDetailPage() {
-  const params = useParams<{ programId: string }>();
+function ProgramDetailInner() {
+  const programId = useSearchParams().get('id') ?? '';
   const hydrated = useHydrated();
   const programs = useAppStore((s) => s.programs);
   const workouts = useAppStore((s) => s.workouts);
   const groups = useAppStore((s) => s.groups);
 
-  const program = programs.find((p) => p.id === params.programId);
+  const program = programs.find((p) => p.id === programId);
 
   const [yearId, setYearId] = useState<string | null>(null);
   const [month, setMonth] = useState<TrainingMonthPlan | null>(null);
@@ -154,7 +154,7 @@ export default function ProgramDetailPage() {
                       {dayWorkouts.map((w) => (
                         <Link
                           key={w.id}
-                          href={`/workouts/${w.id}`}
+                          href={`/workout?id=${w.id}`}
                           className="flex items-center justify-between gap-3 p-3 rounded-xl bg-ocean-50 dark:bg-ocean-900/20 border border-ocean-100 dark:border-ocean-800/40 no-underline hover:bg-ocean-100 dark:hover:bg-ocean-900/30 transition-colors"
                         >
                           <div>
@@ -348,5 +348,13 @@ export default function ProgramDetailPage() {
         </div>
       )}
     </PageShell>
+  );
+}
+
+export default function ProgramDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProgramDetailInner />
+    </Suspense>
   );
 }

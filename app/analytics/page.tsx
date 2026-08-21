@@ -147,7 +147,7 @@ export default function AnalyticsPage() {
             {topExercises.map(({ ex, count }) => (
               <div key={ex!.id}>
                 <div className="flex justify-between text-sm mb-1">
-                  <Link href={`/exercises/${ex!.id}`} className="font-medium text-slate-700 dark:text-slate-200 no-underline hover:text-brand-600 truncate">
+                  <Link href={`/exercise?id=${ex!.id}`} className="font-medium text-slate-700 dark:text-slate-200 no-underline hover:text-brand-600 truncate">
                     {ex!.name}
                   </Link>
                   <span className="font-bold text-slate-500 tabular-nums shrink-0 ml-3">{count}</span>
@@ -189,7 +189,7 @@ export default function AnalyticsPage() {
           <p className="text-sm text-slate-400 mb-5">Выполнение годовых планов</p>
           <div className="space-y-4">
             {programStats.map(({ program, progress }) => (
-              <Link key={program.id} href={`/programs/${program.id}`} className="block no-underline">
+              <Link key={program.id} href={`/program?id=${program.id}`} className="block no-underline">
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="font-medium text-slate-700 dark:text-slate-200">{program.name}</span>
                   <span className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">{progress}%</span>

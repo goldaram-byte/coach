@@ -100,7 +100,7 @@ export default function AthletesPage() {
           const avgSkill =
             Object.values(a.skills).reduce((s, v) => s + v, 0) / Object.values(a.skills).length;
           return (
-            <Link key={a.id} href={`/athletes/${a.id}`} className="card-hover p-5 no-underline block">
+            <Link key={a.id} href={`/athlete?id=${a.id}`} className="card-hover p-5 no-underline block">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-ocean-500 to-ocean-700 flex items-center justify-center text-white font-bold shadow-md shadow-ocean-600/25">
                   {a.firstName[0]}{a.lastName[0]}

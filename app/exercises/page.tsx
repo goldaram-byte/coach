@@ -121,7 +121,7 @@ export default function ExercisesPage() {
         {filtered.map((ex) => (
           <Link
             key={ex.id}
-            href={`/exercises/${ex.id}`}
+            href={`/exercise?id=${ex.id}`}
             className="card-hover p-5 no-underline block"
           >
             <div className="flex items-start justify-between gap-3 mb-2">

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
   Clock,
@@ -24,14 +25,14 @@ import {
   STAGE_LABELS,
 } from '@/lib/labels';
 
-export default function ExerciseDetailPage() {
-  const params = useParams<{ exerciseId: string }>();
+function ExerciseDetailInner() {
+  const exerciseId = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const hydrated = useHydrated();
   const exercises = useAppStore((s) => s.exercises);
   const deleteExercise = useAppStore((s) => s.deleteExercise);
 
-  const ex = exercises.find((e) => e.id === params.exerciseId);
+  const ex = exercises.find((e) => e.id === exerciseId);
 
   if (!hydrated)
     return (
@@ -81,7 +82,7 @@ export default function ExerciseDetailPage() {
             )}
           </div>
           <div className="flex gap-2">
-            <Link href={`/exercises/${ex.id}/edit`} className="btn-secondary no-underline">
+            <Link href={`/exercise-edit?id=${ex.id}`} className="btn-secondary no-underline">
               <Pencil className="w-4 h-4" /> Изменить
             </Link>
             <button onClick={handleDelete} className="btn-secondary text-red-500">
@@ -178,5 +179,13 @@ export default function ExerciseDetailPage() {
         )}
       </div>
     </PageShell>
+  );
+}
+
+export default function ExerciseDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExerciseDetailInner />
+    </Suspense>
   );
 }

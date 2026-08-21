@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   X,
   ChevronLeft,
@@ -30,8 +30,8 @@ interface FlatItem {
   notes?: string;
 }
 
-export default function WorkoutRunPage() {
-  const params = useParams<{ workoutId: string }>();
+function WorkoutRunInner() {
+  const workoutId = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const hydrated = useHydrated();
 
@@ -40,7 +40,7 @@ export default function WorkoutRunPage() {
   const toggleExerciseDone = useAppStore((s) => s.toggleExerciseDone);
   const completeWorkout = useAppStore((s) => s.completeWorkout);
 
-  const workout = workouts.find((w) => w.id === params.workoutId);
+  const workout = workouts.find((w) => w.id === workoutId);
 
   const flat: FlatItem[] = useMemo(() => {
     if (!workout) return [];
@@ -125,7 +125,7 @@ export default function WorkoutRunPage() {
 
   const handleFinish = () => {
     completeWorkout(workout.id, note.trim());
-    router.push(`/workouts/${workout.id}`);
+    router.push(`/workout?id=${workout.id}`);
   };
 
   // ============ FINISH SCREEN ============
@@ -173,7 +173,7 @@ export default function WorkoutRunPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-4">
         <Link
-          href={`/workouts/${workout.id}`}
+          href={`/workout?id=${workout.id}`}
           className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors no-underline"
         >
           <X className="w-5 h-5 text-white" />
@@ -363,5 +363,13 @@ export default function WorkoutRunPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorkoutRunPage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkoutRunInner />
+    </Suspense>
   );
 }

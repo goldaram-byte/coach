@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ChevronLeft,
   Play,
@@ -19,8 +20,8 @@ import { useHydrated } from '@/lib/useHydrated';
 import { STAGE_BADGE, STAGE_LABELS, formatDateFullRu } from '@/lib/labels';
 import { todayISO } from '@/lib/seed';
 
-export default function WorkoutDetailPage() {
-  const params = useParams<{ workoutId: string }>();
+function WorkoutDetailInner() {
+  const workoutId = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const hydrated = useHydrated();
   const workouts = useAppStore((s) => s.workouts);
@@ -29,7 +30,7 @@ export default function WorkoutDetailPage() {
   const duplicateWorkout = useAppStore((s) => s.duplicateWorkout);
   const deleteWorkout = useAppStore((s) => s.deleteWorkout);
 
-  const workout = workouts.find((w) => w.id === params.workoutId);
+  const workout = workouts.find((w) => w.id === workoutId);
 
   if (!hydrated)
     return (
@@ -53,7 +54,7 @@ export default function WorkoutDetailPage() {
 
   const handleDuplicate = () => {
     const newId = duplicateWorkout(workout.id, todayISO());
-    if (newId) router.push(`/workouts/${newId}`);
+    if (newId) router.push(`/workout?id=${newId}`);
   };
 
   const handleDelete = () => {
@@ -99,7 +100,7 @@ export default function WorkoutDetailPage() {
           </div>
           <div className="flex gap-2 flex-wrap">
             {workout.status === 'planned' && (
-              <Link href={`/workouts/${workout.id}/run`} className="btn-primary no-underline">
+              <Link href={`/run?id=${workout.id}`} className="btn-primary no-underline">
                 <Play className="w-4 h-4" /> Начать тренировку
               </Link>
             )}
@@ -154,7 +155,7 @@ export default function WorkoutDetailPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Link
-                          href={`/exercises/${ex.id}`}
+                          href={`/exercise?id=${ex.id}`}
                           className={`font-semibold no-underline hover:text-brand-600 ${
                             isDone
                               ? 'text-slate-400 line-through'
@@ -195,5 +196,13 @@ export default function WorkoutDetailPage() {
         ))}
       </div>
     </PageShell>
+  );
+}
+
+export default function WorkoutDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkoutDetailInner />
+    </Suspense>
   );
 }

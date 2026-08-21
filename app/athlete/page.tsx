@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { ChevronLeft, Plus, Trash2, Target, Trophy, X } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
 import { useAppStore } from '@/store/appStore';
@@ -10,8 +10,8 @@ import { useHydrated } from '@/lib/useHydrated';
 import { calcAge, formatDateRu, SKILL_LABELS } from '@/lib/labels';
 import { AthleteSkills } from '@/lib/types';
 
-export default function AthleteDetailPage() {
-  const params = useParams<{ athleteId: string }>();
+function AthleteDetailInner() {
+  const athleteId = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const hydrated = useHydrated();
   const athletes = useAppStore((s) => s.athletes);
@@ -22,7 +22,7 @@ export default function AthleteDetailPage() {
 
   const [newGoal, setNewGoal] = useState('');
 
-  const athlete = athletes.find((a) => a.id === params.athleteId);
+  const athlete = athletes.find((a) => a.id === athleteId);
 
   if (!hydrated)
     return (
@@ -222,5 +222,13 @@ export default function AthleteDetailPage() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+export default function AthleteDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <AthleteDetailInner />
+    </Suspense>
   );
 }

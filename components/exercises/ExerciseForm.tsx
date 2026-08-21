@@ -64,7 +64,7 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
 
     if (existing) {
       updateExercise(existing.id, { ...form, name: form.name.trim(), videos });
-      router.push(`/exercises/${existing.id}`);
+      router.push(`/exercise?id=${existing.id}`);
     } else {
       const ex: Exercise = {
         id: genId('ex'),
@@ -74,7 +74,7 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
         custom: true,
       };
       addExercise(ex);
-      router.push(`/exercises/${ex.id}`);
+      router.push(`/exercise?id=${ex.id}`);
     }
   };
 

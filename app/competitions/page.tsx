@@ -108,7 +108,7 @@ export default function CompetitionsPage() {
             return (
               <Link
                 key={aid}
-                href={`/athletes/${aid}`}
+                href={`/athlete?id=${aid}`}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-slate-800/60 no-underline hover:bg-ocean-50 dark:hover:bg-ocean-900/20"
               >
                 <span className="text-sm font-medium text-slate-700 dark:text-slate-200">

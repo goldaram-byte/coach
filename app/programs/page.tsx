@@ -47,7 +47,7 @@ export default function ProgramsPage() {
           return (
             <Link
               key={program.id}
-              href={`/programs/${program.id}`}
+              href={`/program?id=${program.id}`}
               className="card-hover p-0 overflow-hidden no-underline block"
             >
               <div className={`h-1.5 bg-gradient-to-r ${STAGE_ACCENT[program.stage]}`} />

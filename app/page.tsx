@@ -95,7 +95,7 @@ export default function Dashboard() {
         </p>
         {todayWorkouts.length > 0 && (
           <Link
-            href={`/workouts/${todayWorkouts[0].id}/run`}
+            href={`/run?id=${todayWorkouts[0].id}`}
             className="btn-primary mt-5 no-underline"
           >
             Начать первую тренировку <ChevronRight className="w-4 h-4" />

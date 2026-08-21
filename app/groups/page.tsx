@@ -87,7 +87,7 @@ export default function GroupsPage() {
                 {program && (
                   <p className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-emerald-500" />
-                    <Link href={`/programs/${program.id}`} className="no-underline text-ocean-600 dark:text-ocean-400 hover:underline">
+                    <Link href={`/program?id=${program.id}`} className="no-underline text-ocean-600 dark:text-ocean-400 hover:underline">
                       {program.name}
                     </Link>
                   </p>
@@ -99,7 +99,7 @@ export default function GroupsPage() {
                   {members.slice(0, 6).map((a) => (
                     <Link
                       key={a.id}
-                      href={`/athletes/${a.id}`}
+                      href={`/athlete?id=${a.id}`}
                       title={`${a.firstName} ${a.lastName}`}
                       className="w-8 h-8 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-[10px] font-bold no-underline"
                     >

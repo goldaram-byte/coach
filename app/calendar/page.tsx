@@ -178,7 +178,7 @@ export default function CalendarPage() {
               {dayWorkouts.map((w) => (
                 <Link
                   key={w.id}
-                  href={`/workouts/${w.id}`}
+                  href={`/workout?id=${w.id}`}
                   className="block p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-ocean-50 dark:hover:bg-ocean-900/20 transition-colors no-underline"
                 >
                   <div className="flex items-center gap-2">
