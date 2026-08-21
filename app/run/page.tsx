@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useHydrated } from '@/lib/useHydrated';
+import AuthGate from '@/components/common/AuthGate';
 
 interface FlatItem {
   blockIndex: number;
@@ -368,8 +369,10 @@ function WorkoutRunInner() {
 
 export default function WorkoutRunPage() {
   return (
-    <Suspense fallback={null}>
-      <WorkoutRunInner />
-    </Suspense>
+    <AuthGate>
+      <Suspense fallback={null}>
+        <WorkoutRunInner />
+      </Suspense>
+    </AuthGate>
   );
 }

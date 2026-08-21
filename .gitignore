@@ -58,3 +58,4 @@ Thumbs.db
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+public/api/data.sqlite
