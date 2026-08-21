@@ -1,23 +1,24 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '../styles/globals.css';
 
 export const metadata: Metadata = {
   title: 'KARATE WKF COACH',
-  description: 'Professional karate training management system for WKF coaches',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+  description:
+    'Профессиональная система планирования подготовки спортсменов для тренеров по каратэ WKF',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f8fafc' },
+    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+  ],
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
+    <html lang="ru">
       <body>{children}</body>
     </html>
   );

@@ -1,262 +1,174 @@
-// User & Auth
-export interface Coach {
-  id: string;
-  user_id: string;
-  full_name: string;
-  email: string;
-  phone?: string;
-  avatar_url?: string;
-  bio?: string;
-  created_at: string;
-  updated_at: string;
-}
+// ===== Core domain types (client data layer) =====
 
-export interface Club {
-  id: string;
-  name: string;
-  city?: string;
-  coach_id: string;
-  created_at: string;
-  updated_at: string;
-}
+export type StageId = 'beginner' | 'intermediate' | 'advanced';
+export type CategoryId = 'kumite' | 'kata' | 'ofp' | 'sfp' | 'tactics' | 'psychology';
+export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
+export type PeriodType = 'preparation' | 'competitive' | 'recovery';
 
-// Training Structure
-export interface TrainingStage {
+export interface ExerciseVideo {
   id: string;
-  name: string;
-  description?: string;
-  level: number;
-  color: string;
-}
-
-export interface TrainingProgram {
-  id: string;
-  coach_id: string;
-  club_id?: string;
-  training_stage_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingYear {
-  id: string;
-  training_program_id: string;
-  year_number: number;
-  start_date: string;
-  end_date: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingPeriod {
-  id: string;
-  training_year_id: string;
-  name: string;
-  period_type: 'preparation' | 'competitive' | 'recovery';
-  start_date: string;
-  end_date: string;
-  goals?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingMonth {
-  id: string;
-  training_period_id: string;
-  month_number: number;
-  month_name: string;
-  start_date: string;
-  end_date: string;
-  goals?: string;
-  main_directions?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingWeek {
-  id: string;
-  training_month_id: string;
-  week_number: number;
-  start_date: string;
-  end_date: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TrainingDay {
-  id: string;
-  training_week_id: string;
-  day_of_week: string;
-  date?: string;
-  is_training_day: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-// Exercises
-export interface ExerciseCategory {
-  id: string;
-  name: string;
-  description?: string;
+  title: string;
+  url: string; // external URL or object URL
 }
 
 export interface Exercise {
   id: string;
-  coach_id: string;
-  category_id: string;
   name: string;
-  description?: string;
-  goals?: string;
-  target_age_min?: number;
-  target_age_max?: number;
+  category: CategoryId;
+  stage: StageId;
+  description: string;
+  goal: string;
   equipment?: string;
-  duration_minutes?: number;
+  durationMin: number;
   sets?: number;
   reps?: number;
-  difficulty_level?: 'beginner' | 'intermediate' | 'advanced';
-  training_stage_id?: string;
-  common_mistakes?: string;
-  simplified_variant?: string;
-  advanced_variant?: string;
-  created_at: string;
-  updated_at: string;
-  videos?: ExerciseVideo[];
-}
-
-export interface ExerciseVideo {
-  id: string;
-  exercise_id: string;
-  video_url: string;
-  title?: string;
-  description?: string;
-  duration_seconds?: number;
-  display_order: number;
-}
-
-// Workouts
-export interface WorkoutBlock {
-  id: string;
-  name: string;
-  description?: string;
-  display_order?: number;
-}
-
-export interface Workout {
-  id: string;
-  training_day_id: string;
-  coach_id: string;
-  name: string;
-  description?: string;
-  goal?: string;
-  group_id?: string;
-  duration_minutes?: number;
-  theme?: string;
-  created_at: string;
-  updated_at: string;
-  exercises?: WorkoutExercise[];
+  difficulty: Difficulty;
+  ageMin?: number;
+  ageMax?: number;
+  commonMistakes?: string;
+  simplifiedVariant?: string;
+  advancedVariant?: string;
+  videos: ExerciseVideo[];
+  custom?: boolean; // created by the coach
 }
 
 export interface WorkoutExercise {
   id: string;
-  workout_id: string;
-  block_id: string;
-  exercise_id: string;
-  display_order: number;
-  duration_minutes?: number;
+  exerciseId: string;
+  durationMin?: number;
   sets?: number;
   reps?: number;
   notes?: string;
-  exercise?: Exercise;
-  block?: WorkoutBlock;
 }
 
-// Athletes
-export interface Athlete {
+export interface WorkoutBlock {
   id: string;
-  coach_id: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string;
-  gender?: string;
-  weight_kg?: number;
-  height_cm?: number;
-  category?: string;
-  experience_years?: number;
-  sport_rank?: string;
-  avatar_url?: string;
-  created_at: string;
-  updated_at: string;
+  name: string;
+  durationMin: number;
+  exercises: WorkoutExercise[];
+}
+
+export type WorkoutStatus = 'planned' | 'completed';
+
+export interface Workout {
+  id: string;
+  name: string;
+  theme: string;
+  goal: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  groupId?: string;
+  stage: StageId;
+  durationMin: number;
+  blocks: WorkoutBlock[];
+  status: WorkoutStatus;
+  completedNote?: string;
+  completedExerciseIds?: string[]; // WorkoutExercise ids marked done
+}
+
+export interface TrainingDayPlan {
+  id: string;
+  weekday: number; // 0 = Monday … 6 = Sunday
+  focus: string; // e.g. "Координация + техника"
+  rest: boolean;
+}
+
+export interface TrainingWeekPlan {
+  id: string;
+  number: number;
+  theme: string;
+  days: TrainingDayPlan[];
+}
+
+export interface TrainingMonthPlan {
+  id: string;
+  monthNumber: number; // 1-12
+  name: string;
+  goals: string[];
+  directions: string;
+  workoutsPlanned: number;
+  progress: number; // 0-100
+  weeks: TrainingWeekPlan[];
+}
+
+export interface TrainingPeriodPlan {
+  id: string;
+  name: string;
+  type: PeriodType;
+  months: TrainingMonthPlan[];
+}
+
+export interface TrainingYearPlan {
+  id: string;
+  number: number;
+  goals: string[];
+  periods: TrainingPeriodPlan[];
+}
+
+export interface Program {
+  id: string;
+  name: string;
+  stage: StageId;
+  description: string;
+  stageTasks: string[];
+  years: TrainingYearPlan[];
+}
+
+export interface GroupScheduleSlot {
+  weekday: number; // 0 = Monday
+  time: string;
 }
 
 export interface Group {
   id: string;
-  coach_id: string;
   name: string;
-  age_min?: number;
-  age_max?: number;
-  training_stage_id?: string;
-  athlete_count?: number;
-  schedule?: string;
-  program_id?: string;
-  created_at: string;
-  updated_at: string;
+  ageMin: number;
+  ageMax: number;
+  stage: StageId;
+  schedule: GroupScheduleSlot[];
+  programId?: string;
 }
 
-export interface AthleteGroup {
-  id: string;
-  group_id: string;
-  athlete_id: string;
-  joined_at: string;
+export interface AthleteSkills {
+  speed: number;
+  reaction: number;
+  technique: number;
+  tactics: number;
+  endurance: number;
+  strength: number;
+  flexibility: number;
+  psychology: number;
 }
 
-// Competitions
-export interface Competition {
+export interface Athlete {
   id: string;
-  coach_id: string;
-  name: string;
-  date: string;
-  location?: string;
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  weightKg?: number;
   category?: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CompetitionAthlete {
-  id: string;
-  competition_id: string;
-  athlete_id: string;
-  category?: string;
-  place?: number;
-}
-
-// Progress
-export interface AthleteProgress {
-  id: string;
-  athlete_id: string;
-  metric_type: string;
-  value: number;
-  date: string;
+  experienceYears?: number;
+  rank?: string;
+  groupId?: string;
+  skills: AthleteSkills;
+  goals: string[];
   notes?: string;
 }
 
-export interface AthleteProgram {
-  id: string;
-  athlete_id: string;
-  program_id: string;
-  assigned_date: string;
+export interface CompetitionResult {
+  athleteId: string;
+  place?: number;
+  fights?: number;
+  wins?: number;
+  note?: string;
 }
 
-// Templates
-export interface WorkoutTemplate {
+export interface Competition {
   id: string;
-  coach_id: string;
   name: string;
-  description?: string;
-  template_data: Record<string, any>;
-  created_at: string;
-  updated_at: string;
+  date: string;
+  location: string;
+  category: string;
+  athleteIds: string[];
+  results: CompetitionResult[];
 }

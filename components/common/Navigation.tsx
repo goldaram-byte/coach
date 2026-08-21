@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, BookOpen, Users, BarChart3, Calendar } from 'lucide-react';
+import { Home, BookOpen, Dumbbell, CalendarDays, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,28 +10,34 @@ export default function Navigation() {
   const navItems = [
     { href: '/', icon: Home, label: 'Главная' },
     { href: '/programs', icon: BookOpen, label: 'Программы' },
-    { href: '/workouts', icon: Calendar, label: 'Тренировки' },
-    { href: '/exercises', icon: Users, label: 'Упражнения' },
+    { href: '/calendar', icon: CalendarDays, label: 'Календарь' },
+    { href: '/exercises', icon: Dumbbell, label: 'Упражнения' },
     { href: '/analytics', icon: BarChart3, label: 'Аналитика' },
   ];
 
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 md:hidden">
-      <div className="grid grid-cols-5 gap-1">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 lg:hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="grid grid-cols-5">
         {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = pathname === href;
+          const active = isActive(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center justify-center py-3 px-2 text-xs font-medium transition-colors ${
-                isActive
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
+              className={`relative flex flex-col items-center justify-center py-2.5 text-[11px] font-medium no-underline transition-colors ${
+                active
+                  ? 'text-brand-600 dark:text-brand-400'
+                  : 'text-slate-500 dark:text-slate-400'
               }`}
             >
-              <Icon className="w-6 h-6 mb-1" />
-              <span className="truncate">{label}</span>
+              {active && (
+                <span className="absolute top-0 w-8 h-0.5 rounded-full bg-gradient-to-r from-brand-500 to-brand-600" />
+              )}
+              <Icon className="w-5 h-5 mb-0.5" strokeWidth={active ? 2.4 : 2} />
+              <span>{label}</span>
             </Link>
           );
         })}

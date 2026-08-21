@@ -1,192 +1,160 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import { Plus, Filter, Search } from 'lucide-react';
-import Header from '@/components/common/Header';
-import Navigation from '@/components/common/Navigation';
-import { EXERCISE_CATEGORIES, TRAINING_STAGES } from '@/lib/constants';
+import { Plus, Search, Video, Clock } from 'lucide-react';
+import PageShell from '@/components/common/PageShell';
+import { useAppStore } from '@/store/appStore';
+import { useHydrated } from '@/lib/useHydrated';
+import {
+  CATEGORY_LABELS,
+  DIFFICULTY_LABELS,
+  STAGE_BADGE,
+  STAGE_LABELS,
+  plural,
+} from '@/lib/labels';
+import { CategoryId, StageId } from '@/lib/types';
+
+const DIFF_BADGE: Record<string, string> = {
+  beginner: 'badge-green',
+  intermediate: 'badge-amber',
+  advanced: 'badge-red',
+};
 
 export default function ExercisesPage() {
-  const [exercises, setExercises] = useState([
-    {
-      id: '1',
-      name: 'Gyaku-zuki',
-      category: 'kumite',
-      stage: 'beginner',
-      duration: 5,
-      difficulty: 'beginner',
-      videos: 2,
-    },
-    {
-      id: '2',
-      name: 'Отжимания',
-      category: 'ofp',
-      stage: 'beginner',
-      duration: 3,
-      difficulty: 'beginner',
-      videos: 1,
-    },
-    {
-      id: '3',
-      name: 'Mawashi-geri',
-      category: 'kumite',
-      stage: 'intermediate',
-      duration: 8,
-      difficulty: 'intermediate',
-      videos: 3,
-    },
-    {
-      id: '4',
-      name: 'Приседания на одной ноге',
-      category: 'sfp',
-      stage: 'intermediate',
-      duration: 4,
-      difficulty: 'advanced',
-      videos: 1,
-    },
-  ]);
+  const hydrated = useHydrated();
+  const exercises = useAppStore((s) => s.exercises);
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [category, setCategory] = useState<CategoryId | null>(null);
+  const [stage, setStage] = useState<StageId | null>(null);
 
-  const filteredExercises = exercises.filter((ex) => {
-    const matchCategory = !selectedCategory || ex.category === selectedCategory;
-    const matchSearch = ex.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    return matchCategory && matchSearch;
+  if (!hydrated)
+    return (
+      <PageShell>
+        <div className="h-40 card animate-pulse" />
+      </PageShell>
+    );
+
+  const filtered = exercises.filter((ex) => {
+    const s = searchTerm.toLowerCase();
+    return (
+      (ex.name.toLowerCase().includes(s) || ex.description.toLowerCase().includes(s)) &&
+      (!category || ex.category === category) &&
+      (!stage || ex.stage === stage)
+    );
   });
 
-  const getCategoryName = (catId: string) => {
-    return Object.values(EXERCISE_CATEGORIES).find(
-      (c) => c.id === catId
-    )?.name || catId;
-  };
-
-  const getStageName = (stageId: string) => {
-    return Object.values(TRAINING_STAGES).find(
-      (s) => s.id === stageId
-    )?.name || stageId;
-  };
-
-  const getDifficultyColor = (difficulty: string) => {
-    if (difficulty === 'beginner')
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
-    if (difficulty === 'intermediate')
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-100';
-    if (difficulty === 'advanced')
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
-    return 'bg-gray-100 text-gray-800';
-  };
-
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 md:pb-0">
-      <Header />
+    <PageShell>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <div>
+          <h1 className="page-title">Библиотека упражнений</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            {exercises.length} {plural(exercises.length, 'упражнение', 'упражнения', 'упражнений')}{' '}
+            · используйте в любых программах и тренировках
+          </p>
+        </div>
+        <Link href="/exercises/new" className="btn-primary no-underline">
+          <Plus className="w-4 h-4" /> Добавить упражнение
+        </Link>
+      </div>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Библиотека упражнений
-          </h1>
-          <button className="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Новое упражнение
-          </button>
+      {/* Search & filters */}
+      <div className="mb-6 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-4 top-3 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Поиск упражнений…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-base pl-11"
+          />
         </div>
 
-        {/* Search & Filter */}
-        <div className="mb-6 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Поиск упражнений..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-base pl-10"
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setCategory(null)}
+            className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+              !category
+                ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-sm'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            Все
+          </button>
+          {(Object.keys(CATEGORY_LABELS) as CategoryId[]).map((c) => (
             <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                selectedCategory === null
-                  ? 'btn-primary'
-                  : 'btn-secondary'
+              key={c}
+              onClick={() => setCategory(category === c ? null : c)}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                category === c
+                  ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
               }`}
             >
-              Все категории
+              {CATEGORY_LABELS[c]}
             </button>
-            {Object.values(EXERCISE_CATEGORIES).map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() =>
-                  setSelectedCategory(
-                    selectedCategory === cat.id ? null : cat.id
-                  )
-                }
-                className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                  selectedCategory === cat.id
-                    ? 'btn-primary'
-                    : 'btn-secondary'
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Exercises Grid */}
-        <div className="grid gap-4">
-          {filteredExercises.map((exercise) => (
-            <div key={exercise.id} className="card-hover p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {exercise.name}
-                  </h3>
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded">
-                      {getCategoryName(exercise.category)}
-                    </span>
-                    <span className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100 rounded">
-                      {getStageName(exercise.stage)}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${getDifficultyColor(
-                        exercise.difficulty
-                      )}`}
-                    >
-                      {exercise.difficulty === 'beginner'
-                        ? 'Начальный'
-                        : exercise.difficulty === 'intermediate'
-                        ? 'Средний'
-                        : 'Продвинутый'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-                <span>⏱ {exercise.duration} мин</span>
-                <span>🎬 {exercise.videos} видео</span>
-              </div>
-            </div>
           ))}
         </div>
 
-        {filteredExercises.length === 0 && (
-          <div className="card p-12 text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Упражнения не найдены
-            </p>
-          </div>
-        )}
-      </main>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(STAGE_LABELS) as StageId[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStage(stage === s ? null : s)}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                stage === s
+                  ? 'bg-gradient-to-r from-ocean-600 to-ocean-700 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+              }`}
+            >
+              {STAGE_LABELS[s]}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <Navigation />
-    </div>
+      {/* Grid */}
+      <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
+        {filtered.map((ex) => (
+          <Link
+            key={ex.id}
+            href={`/exercises/${ex.id}`}
+            className="card-hover p-5 no-underline block"
+          >
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <h3 className="font-bold text-slate-900 dark:text-white">{ex.name}</h3>
+              {ex.custom && <span className="badge-orange shrink-0">Моё</span>}
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">
+              {ex.description}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <span className="badge-blue">{CATEGORY_LABELS[ex.category]}</span>
+              <span className={DIFF_BADGE[ex.difficulty]}>{DIFFICULTY_LABELS[ex.difficulty]}</span>
+              <span className="badge-gray inline-flex items-center gap-1">
+                <Clock className="w-3 h-3" /> {ex.durationMin} мин
+              </span>
+              {ex.videos.length > 0 && (
+                <span className="badge-gray inline-flex items-center gap-1">
+                  <Video className="w-3 h-3" /> {ex.videos.length}
+                </span>
+              )}
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {filtered.length === 0 && (
+        <div className="card p-10 text-center">
+          <p className="text-slate-500 dark:text-slate-400 mb-4">Упражнения не найдены</p>
+          <Link href="/exercises/new" className="btn-primary no-underline">
+            Создать упражнение
+          </Link>
+        </div>
+      )}
+    </PageShell>
   );
 }

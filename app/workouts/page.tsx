@@ -1,97 +1,84 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import { Calendar, Clock, Play } from 'lucide-react';
-import Header from '@/components/common/Header';
-import Navigation from '@/components/common/Navigation';
+import { Plus } from 'lucide-react';
+import PageShell from '@/components/common/PageShell';
+import WorkoutCard from '@/components/workouts/WorkoutCard';
+import { useAppStore } from '@/store/appStore';
+import { useHydrated } from '@/lib/useHydrated';
+import { todayISO } from '@/lib/seed';
+
+type Tab = 'upcoming' | 'completed';
 
 export default function WorkoutsPage() {
-  const [workouts] = useState([
-    {
-      id: '1',
-      date: '2025-08-21',
-      time: '16:00',
-      group: 'Дети 6-7 лет',
-      theme: 'Координация + базовая техника',
-      duration: 90,
-      blocks: 6,
-      exercises: 18,
-    },
-    {
-      id: '2',
-      date: '2025-08-21',
-      time: '18:00',
-      group: 'Спортивная группа',
-      theme: 'Контратака',
-      duration: 120,
-      blocks: 7,
-      exercises: 22,
-    },
-    {
-      id: '3',
-      date: '2025-08-22',
-      time: '16:00',
-      group: 'Дети 8-9 лет',
-      theme: 'Физическая подготовка',
-      duration: 60,
-      blocks: 4,
-      exercises: 12,
-    },
-  ]);
+  const hydrated = useHydrated();
+  const workouts = useAppStore((s) => s.workouts);
+  const [tab, setTab] = useState<Tab>('upcoming');
+
+  if (!hydrated)
+    return (
+      <PageShell>
+        <div className="h-40 card animate-pulse" />
+      </PageShell>
+    );
+
+  const today = todayISO();
+  const upcoming = workouts
+    .filter((w) => w.status === 'planned' && w.date >= today)
+    .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  const completed = workouts
+    .filter((w) => w.status === 'completed' || w.date < today)
+    .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+
+  const list = tab === 'upcoming' ? upcoming : completed;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 md:pb-0">
-      <Header />
+    <PageShell>
+      <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+        <h1 className="page-title">Тренировки</h1>
+        <Link href="/builder" className="btn-primary no-underline">
+          <Plus className="w-4 h-4" /> Создать тренировку
+        </Link>
+      </div>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-          Тренировки
-        </h1>
+      <div className="flex gap-2 mb-6">
+        {([
+          ['upcoming', `Предстоящие (${upcoming.length})`],
+          ['completed', `Прошедшие (${completed.length})`],
+        ] as [Tab, string][]).map(([t, label]) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors ${
+              tab === t
+                ? 'bg-gradient-to-r from-brand-500 to-brand-600 text-white shadow-md shadow-brand-500/25'
+                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <div className="grid gap-4">
-          {workouts.map((workout) => (
-            <div key={workout.id} className="card-hover p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {workout.time}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {workout.theme}
-                      </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {workout.group}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <button className="btn-primary flex items-center gap-2">
-                  <Play className="w-4 h-4" />
-                  Начать
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{workout.date}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{workout.duration} мин</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>📦 {workout.blocks} блоков</span>
-                </div>
-              </div>
-            </div>
+      {list.length > 0 ? (
+        <div className="space-y-3">
+          {list.map((w) => (
+            <WorkoutCard key={w.id} workout={w} showDate />
           ))}
         </div>
-      </main>
-
-      <Navigation />
-    </div>
+      ) : (
+        <div className="card p-10 text-center">
+          <p className="text-slate-500 dark:text-slate-400 mb-4">
+            {tab === 'upcoming' ? 'Запланированных тренировок нет' : 'Прошедших тренировок нет'}
+          </p>
+          {tab === 'upcoming' && (
+            <Link href="/builder" className="btn-primary no-underline">
+              Создать тренировку
+            </Link>
+          )}
+        </div>
+      )}
+    </PageShell>
   );
 }
