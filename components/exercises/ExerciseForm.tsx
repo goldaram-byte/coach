@@ -2,8 +2,10 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Upload, Link2, Trash2, ChevronUp, ChevronDown, Video } from 'lucide-react';
+import { Save, Upload, Link2, Trash2, ChevronUp, ChevronDown, Video, Lock, Loader2 } from 'lucide-react';
 import { useAppStore, genId } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
+import { api, apiErrorText } from '@/lib/api';
 import { CATEGORY_LABELS, DIFFICULTY_LABELS, STAGE_LABELS } from '@/lib/labels';
 import { CategoryId, Difficulty, Exercise, ExerciseVideo, StageId } from '@/lib/types';
 
@@ -12,6 +14,13 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
   const addExercise = useAppStore((s) => s.addExercise);
   const updateExercise = useAppStore((s) => s.updateExercise);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const authStatus = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  // Управлять видео может только владелец. В автономном режиме
+  // (без сервера) ограничение не действует — данные всё равно локальные.
+  const canManageVideos = authStatus === 'offline' || !!user?.isAdmin;
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
     name: existing?.name ?? '',
@@ -43,9 +52,25 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
     setVideoUrl('');
   };
 
-  const addVideoFile = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setVideos((vs) => [...vs, { id: genId('vid'), title: file.name, url }]);
+  const addVideoFile = async (file: File) => {
+    if (authStatus === 'authed') {
+      // Загрузка на сервер — видео сохранится навсегда и будет
+      // доступно на всех устройствах
+      setUploading(true);
+      setError('');
+      try {
+        const { url } = await api.uploadVideo(file);
+        setVideos((vs) => [...vs, { id: genId('vid'), title: file.name, url }]);
+      } catch (e) {
+        setError(apiErrorText(e));
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      // Автономный режим — локальная ссылка (до перезагрузки страницы)
+      const url = URL.createObjectURL(file);
+      setVideos((vs) => [...vs, { id: genId('vid'), title: file.name, url }]);
+    }
   };
 
   const moveVideo = (id: string, dir: -1 | 1) =>
@@ -229,7 +254,9 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
           <Video className="w-5 h-5 text-brand-500" /> Видео
         </h2>
         <p className="text-sm text-slate-400 mb-4">
-          Загрузите файл или добавьте ссылку. Первое видео показывается в режиме тренировки.
+          {canManageVideos
+            ? 'Загрузите файл или добавьте ссылку. Первое видео показывается в режиме тренировки.'
+            : 'Видео к упражнениям добавляет владелец приложения.'}
         </p>
 
         {videos.length > 0 && (
@@ -239,65 +266,99 @@ export default function ExerciseForm({ existing }: { existing?: Exercise }) {
                 key={v.id}
                 className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60"
               >
-                <div className="flex flex-col gap-0.5">
-                  <button onClick={() => moveVideo(v.id, -1)} disabled={i === 0} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30">
-                    <ChevronUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button onClick={() => moveVideo(v.id, 1)} disabled={i === videos.length - 1} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30">
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                {canManageVideos && (
+                  <div className="flex flex-col gap-0.5">
+                    <button onClick={() => moveVideo(v.id, -1)} disabled={i === 0} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30">
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => moveVideo(v.id, 1)} disabled={i === videos.length - 1} className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30">
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
                 <video src={v.url} className="w-24 aspect-video rounded-lg bg-slate-950 object-cover shrink-0" />
-                <input
-                  value={v.title}
-                  onChange={(e) =>
-                    setVideos((vs) => vs.map((x) => (x.id === v.id ? { ...x, title: e.target.value } : x)))
-                  }
-                  placeholder="Название видео"
-                  className="flex-1 min-w-0 bg-transparent text-sm focus:outline-none border-b border-transparent focus:border-brand-400"
-                />
-                <button
-                  onClick={() => setVideos((vs) => vs.filter((x) => x.id !== v.id))}
-                  className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-400 shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {canManageVideos ? (
+                  <input
+                    value={v.title}
+                    onChange={(e) =>
+                      setVideos((vs) => vs.map((x) => (x.id === v.id ? { ...x, title: e.target.value } : x)))
+                    }
+                    placeholder="Название видео"
+                    className="flex-1 min-w-0 bg-transparent text-sm focus:outline-none border-b border-transparent focus:border-brand-400"
+                  />
+                ) : (
+                  <span className="flex-1 min-w-0 text-sm text-slate-600 dark:text-slate-300 truncate">
+                    {v.title || 'Видео'}
+                  </span>
+                )}
+                {canManageVideos && (
+                  <button
+                    onClick={() => setVideos((vs) => vs.filter((x) => x.id !== v.id))}
+                    className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 text-red-400 shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => fileInputRef.current?.click()} className="btn-secondary">
-            <Upload className="w-4 h-4" /> Загрузить файл
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) addVideoFile(f);
-              e.target.value = '';
-            }}
-          />
-          <div className="flex flex-1 min-w-[220px] gap-2">
-            <input
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="…или вставьте ссылку на видео"
-              className="input-base !py-2"
-            />
-            <button onClick={addVideoUrl} className="btn-blue !py-2">
-              <Link2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        <p className="text-xs text-slate-400 mt-2">
-          В демо-режиме загруженные файлы доступны до перезагрузки страницы. С подключённым
-          Supabase Storage видео сохраняются навсегда.
-        </p>
+        {canManageVideos ? (
+          <>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="btn-secondary"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Загрузка…
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" /> Загрузить файл
+                  </>
+                )}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) addVideoFile(f);
+                  e.target.value = '';
+                }}
+              />
+              <div className="flex flex-1 min-w-[220px] gap-2">
+                <input
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="…или вставьте ссылку на видео"
+                  className="input-base !py-2"
+                />
+                <button onClick={addVideoUrl} className="btn-blue !py-2">
+                  <Link2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">
+              {authStatus === 'authed'
+                ? 'Файлы сохраняются на вашем сервере (MP4, MOV, WebM, до 300 МБ) и доступны со всех устройств.'
+                : 'В автономном режиме загруженные файлы доступны до перезагрузки страницы.'}
+            </p>
+          </>
+        ) : (
+          videos.length === 0 && (
+            <div className="flex items-center gap-2.5 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-sm text-slate-500 dark:text-slate-400">
+              <Lock className="w-4 h-4 shrink-0" />
+              Загрузка видео доступна только владельцу приложения.
+            </div>
+          )
+        )}
       </div>
 
       <div className="card p-5 sm:p-6">

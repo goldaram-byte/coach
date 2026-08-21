@@ -76,6 +76,25 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ id, status }),
     }),
+
+  uploadVideo: async (file: File): Promise<{ url: string }> => {
+    const form = new FormData();
+    form.append('video', file);
+    const res = await fetch('/api/upload.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: form, // Content-Type выставит браузер (multipart)
+    });
+    let body: any = null;
+    const text = await res.text();
+    try {
+      body = text ? JSON.parse(text) : null;
+    } catch {
+      throw new ApiError('api_unavailable', res.status);
+    }
+    if (!res.ok) throw new ApiError(body?.error ?? 'unknown_error', res.status);
+    return body;
+  },
 };
 
 export const API_ERROR_MESSAGES: Record<string, string> = {
@@ -90,6 +109,10 @@ export const API_ERROR_MESSAGES: Record<string, string> = {
   password_too_short: 'Пароль должен быть не короче 6 символов.',
   missing_fields: 'Заполните все поля.',
   unauthorized: 'Требуется вход.',
+  forbidden: 'Это действие доступно только владельцу.',
+  no_file_or_too_large: 'Файл не получен — возможно, он больше лимита загрузки хостинга.',
+  file_too_large: 'Файл слишком большой (максимум 300 МБ).',
+  unsupported_format: 'Поддерживаются форматы: MP4, MOV, WebM, M4V.',
 };
 
 export const apiErrorText = (e: unknown): string => {
