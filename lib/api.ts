@@ -69,6 +69,14 @@ export const api = {
       body: JSON.stringify({ data }),
     }),
 
+  getShared: () => request<{ data: string | null; updatedAt: string | null }>('shared.php'),
+
+  saveShared: (data: string) =>
+    request<{ ok: boolean }>('shared.php', {
+      method: 'POST',
+      body: JSON.stringify({ data }),
+    }),
+
   adminUsers: () => request<{ users: (ApiUser & { createdAt: string })[] }>('admin.php?action=users'),
 
   adminSetStatus: (id: number, status: 'active' | 'pending' | 'blocked') =>

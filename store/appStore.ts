@@ -10,6 +10,7 @@ import {
   Competition,
   Program,
   WorkoutBlock,
+  BlockTemplate,
 } from '@/lib/types';
 import {
   seedExercises,
@@ -18,6 +19,7 @@ import {
   seedAthletes,
   seedCompetitions,
   seedPrograms,
+  seedSharedBlocks,
 } from '@/lib/seed';
 
 export const genId = (prefix: string) =>
@@ -30,6 +32,23 @@ interface AppState {
   athletes: Athlete[];
   competitions: Competition[];
   programs: Program[];
+  /** Базовые блоки владельца — видны всем тренерам */
+  sharedBlocks: BlockTemplate[];
+  /** Личные блоки текущего тренера */
+  blockTemplates: BlockTemplate[];
+  /** Базовые блоки, скрытые текущим тренером */
+  hiddenSharedBlockIds: string[];
+
+  // Block templates
+  setSharedBlocks: (blocks: BlockTemplate[]) => void;
+  addSharedBlock: (b: BlockTemplate) => void;
+  updateSharedBlock: (id: string, patch: Partial<BlockTemplate>) => void;
+  deleteSharedBlock: (id: string) => void;
+  addBlockTemplate: (b: BlockTemplate) => void;
+  updateBlockTemplate: (id: string, patch: Partial<BlockTemplate>) => void;
+  deleteBlockTemplate: (id: string) => void;
+  toggleHiddenSharedBlock: (id: string) => void;
+  upsertExercises: (exs: Exercise[]) => void;
 
   // Exercises
   addExercise: (ex: Exercise) => void;
@@ -71,6 +90,41 @@ export const useAppStore = create<AppState>()(
       athletes: seedAthletes,
       competitions: seedCompetitions,
       programs: seedPrograms,
+      sharedBlocks: seedSharedBlocks,
+      blockTemplates: [],
+      hiddenSharedBlockIds: [],
+
+      setSharedBlocks: (blocks) => set({ sharedBlocks: blocks }),
+      addSharedBlock: (b) => set((s) => ({ sharedBlocks: [b, ...s.sharedBlocks] })),
+      updateSharedBlock: (id, patch) =>
+        set((s) => ({
+          sharedBlocks: s.sharedBlocks.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+        })),
+      deleteSharedBlock: (id) =>
+        set((s) => ({ sharedBlocks: s.sharedBlocks.filter((b) => b.id !== id) })),
+
+      addBlockTemplate: (b) => set((s) => ({ blockTemplates: [b, ...s.blockTemplates] })),
+      updateBlockTemplate: (id, patch) =>
+        set((s) => ({
+          blockTemplates: s.blockTemplates.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+        })),
+      deleteBlockTemplate: (id) =>
+        set((s) => ({ blockTemplates: s.blockTemplates.filter((b) => b.id !== id) })),
+
+      toggleHiddenSharedBlock: (id) =>
+        set((s) => {
+          const hidden = new Set(s.hiddenSharedBlockIds);
+          if (hidden.has(id)) hidden.delete(id);
+          else hidden.add(id);
+          return { hiddenSharedBlockIds: Array.from(hidden) };
+        }),
+
+      upsertExercises: (exs) =>
+        set((s) => {
+          const known = new Set(s.exercises.map((e) => e.id));
+          const fresh = exs.filter((e) => !known.has(e.id));
+          return fresh.length ? { exercises: [...s.exercises, ...fresh] } : {};
+        }),
 
       addExercise: (ex) => set((s) => ({ exercises: [ex, ...s.exercises] })),
       updateExercise: (id, patch) =>
@@ -159,10 +213,13 @@ export const useAppStore = create<AppState>()(
           athletes: seedAthletes,
           competitions: seedCompetitions,
           programs: seedPrograms,
+          sharedBlocks: seedSharedBlocks,
+          blockTemplates: [],
+          hiddenSharedBlockIds: [],
         }),
     }),
     {
-      name: 'karate-wkf-coach-v1',
+      name: 'karate-wkf-coach-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

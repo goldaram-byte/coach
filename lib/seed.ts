@@ -6,6 +6,8 @@ import {
   Competition,
   Workout,
   TrainingWeekPlan,
+  BlockTemplate,
+  TemplateExercise,
 } from './types';
 
 // ---------- helpers ----------
@@ -932,261 +934,87 @@ export const seedCompetitions: Competition[] = [
 
 // ---------- Workouts ----------
 
-const warmupBlock = (id: string) => ({
-  id: `${id}-b1`,
-  name: 'Разминка',
-  durationMin: 15,
-  exercises: [
-    { id: `${id}-b1-e1`, exerciseId: 'ex-jog', durationMin: 5 },
-    { id: `${id}-b1-e2`, exerciseId: 'ex-joint-warmup', durationMin: 5 },
-    { id: `${id}-b1-e3`, exerciseId: 'ex-dynamic-stretch', durationMin: 5 },
-  ],
+// Демо-тренировки убраны: тренеры собирают тренировки сами
+// из базовых и личных блоков.
+export const seedWorkouts: Workout[] = [];
+
+// ---------- Базовые блоки тренировок (создаёт и редактирует владелец) ----------
+
+const embed = (exerciseId: string, over: Partial<TemplateExercise> = {}): TemplateExercise => {
+  const ex = seedExercises.find((e) => e.id === exerciseId)!;
+  return {
+    id: `te-${exerciseId}`,
+    exercise: ex,
+    durationMin: ex.durationMin,
+    sets: ex.sets,
+    reps: ex.reps,
+    ...over,
+  };
+};
+
+const blockDuration = (items: TemplateExercise[]): number =>
+  items.reduce((s, te) => s + (te.durationMin ?? 0), 0);
+
+const makeSharedBlock = (
+  id: string,
+  name: string,
+  stage: BlockTemplate['stage'],
+  description: string,
+  exercises: TemplateExercise[]
+): BlockTemplate => ({
+  id,
+  name,
+  stage,
+  description,
+  durationMin: blockDuration(exercises),
+  exercises,
 });
 
-const cooldownBlock = (id: string) => ({
-  id: `${id}-b6`,
-  name: 'Заминка',
-  durationMin: 10,
-  exercises: [
-    { id: `${id}-b6-e1`, exerciseId: 'ex-static-stretch', durationMin: 6 },
-    { id: `${id}-b6-e2`, exerciseId: 'ex-breathing', durationMin: 4 },
-  ],
-});
-
-export const seedWorkouts: Workout[] = [
-  // Сегодня: начальная подготовка
-  {
-    id: 'wk-today-1',
-    name: 'Координация + базовая техника',
-    theme: 'Координация + базовая техника',
-    goal: 'Развитие координации и закрепление kizami-zuki',
-    date: todayISO(),
-    time: '16:00',
-    groupId: 'grp-kids-6-7',
-    stage: 'beginner',
-    durationMin: 90,
-    status: 'planned',
-    blocks: [
-      warmupBlock('wk-today-1'),
-      {
-        id: 'wk-today-1-b2',
-        name: 'Работа ног',
-        durationMin: 10,
-        exercises: [
-          { id: 'wk-today-1-b2-e1', exerciseId: 'ex-footwork-fwd', durationMin: 5 },
-          { id: 'wk-today-1-b2-e2', exerciseId: 'ex-reaction-signal', durationMin: 5 },
-        ],
-      },
-      {
-        id: 'wk-today-1-b3',
-        name: 'Координация',
-        durationMin: 15,
-        exercises: [
-          { id: 'wk-today-1-b3-e1', exerciseId: 'ex-ladder', durationMin: 8 },
-          { id: 'wk-today-1-b3-e2', exerciseId: 'ex-game-tag', durationMin: 7 },
-        ],
-      },
-      {
-        id: 'wk-today-1-b4',
-        name: 'Техническая подготовка',
-        durationMin: 25,
-        exercises: [
-          { id: 'wk-today-1-b4-e1', exerciseId: 'ex-kizami', durationMin: 12, sets: 3, reps: 15 },
-          { id: 'wk-today-1-b4-e2', exerciseId: 'ex-gyaku', durationMin: 13, sets: 3, reps: 15 },
-        ],
-      },
-      {
-        id: 'wk-today-1-b5',
-        name: 'ОФП',
-        durationMin: 15,
-        exercises: [
-          { id: 'wk-today-1-b5-e1', exerciseId: 'ex-pushups', durationMin: 5, sets: 3, reps: 12 },
-          { id: 'wk-today-1-b5-e2', exerciseId: 'ex-squats', durationMin: 5, sets: 3, reps: 20 },
-          { id: 'wk-today-1-b5-e3', exerciseId: 'ex-plank', durationMin: 5, sets: 3 },
-        ],
-      },
-      cooldownBlock('wk-today-1'),
-    ],
-  },
-  // Сегодня: спортивная группа
-  {
-    id: 'wk-today-2',
-    name: 'Контратака',
-    theme: 'Контратака после защиты',
-    goal: 'Развитие навыка своевременной контратаки и работы на дистанции',
-    date: todayISO(),
-    time: '18:00',
-    groupId: 'grp-sport',
-    stage: 'intermediate',
-    durationMin: 120,
-    status: 'planned',
-    blocks: [
-      warmupBlock('wk-today-2'),
-      {
-        id: 'wk-today-2-b2',
-        name: 'Работа ног',
-        durationMin: 15,
-        exercises: [
-          { id: 'wk-today-2-b2-e1', exerciseId: 'ex-distance-change', durationMin: 7 },
-          { id: 'wk-today-2-b2-e2', exerciseId: 'ex-explosive-start', durationMin: 8 },
-        ],
-      },
-      {
-        id: 'wk-today-2-b3',
-        name: 'Техническая подготовка',
-        durationMin: 25,
-        exercises: [
-          { id: 'wk-today-2-b3-e1', exerciseId: 'ex-gyaku', durationMin: 10, sets: 4, reps: 12 },
-          { id: 'wk-today-2-b3-e2', exerciseId: 'ex-mawashi', durationMin: 15, sets: 3, reps: 12 },
-        ],
-      },
-      {
-        id: 'wk-today-2-b4',
-        name: 'Работа в парах',
-        durationMin: 30,
-        exercises: [
-          {
-            id: 'wk-today-2-b4-e1',
-            exerciseId: 'ex-counter-combo',
-            durationMin: 15,
-            notes: '1) медленно 2) средняя скорость 3) по заданию 4) свободно',
-          },
-          { id: 'wk-today-2-b4-e2', exerciseId: 'ex-free-sparring', durationMin: 15 },
-        ],
-      },
-      {
-        id: 'wk-today-2-b5',
-        name: 'СФП',
-        durationMin: 15,
-        exercises: [
-          { id: 'wk-today-2-b5-e1', exerciseId: 'ex-ladder', durationMin: 7 },
-          { id: 'wk-today-2-b5-e2', exerciseId: 'ex-explosive-start', durationMin: 8 },
-        ],
-      },
-      cooldownBlock('wk-today-2'),
-    ],
-  },
-  // Завтра
-  {
-    id: 'wk-tmrw-1',
-    name: 'ОФП + гибкость',
-    theme: 'ОФП + гибкость',
-    goal: 'Развитие силы и гибкости',
-    date: addDays(todayISO(), 1),
-    time: '16:00',
-    groupId: 'grp-kids-8-9',
-    stage: 'beginner',
-    durationMin: 60,
-    status: 'planned',
-    blocks: [
-      warmupBlock('wk-tmrw-1'),
-      {
-        id: 'wk-tmrw-1-b2',
-        name: 'ОФП',
-        durationMin: 25,
-        exercises: [
-          { id: 'wk-tmrw-1-b2-e1', exerciseId: 'ex-pushups', durationMin: 8, sets: 3, reps: 15 },
-          { id: 'wk-tmrw-1-b2-e2', exerciseId: 'ex-squats', durationMin: 8, sets: 3, reps: 20 },
-          { id: 'wk-tmrw-1-b2-e3', exerciseId: 'ex-plank', durationMin: 9, sets: 3 },
-        ],
-      },
-      {
-        id: 'wk-tmrw-1-b3',
-        name: 'Гибкость',
-        durationMin: 12,
-        exercises: [
-          { id: 'wk-tmrw-1-b3-e1', exerciseId: 'ex-static-stretch', durationMin: 12 },
-        ],
-      },
-      cooldownBlock('wk-tmrw-1'),
-    ],
-  },
-  // Послезавтра: сборная
-  {
-    id: 'wk-p2-1',
-    name: 'Тактика: концовки боёв',
-    theme: 'Последние секунды боя',
-    goal: 'Отработка тактики защиты преимущества и отыгрывания счёта',
-    date: addDays(todayISO(), 2),
-    time: '19:30',
-    groupId: 'grp-elite',
-    stage: 'advanced',
-    durationMin: 120,
-    status: 'planned',
-    blocks: [
-      warmupBlock('wk-p2-1'),
-      {
-        id: 'wk-p2-1-b2',
-        name: 'Тактическая подготовка',
-        durationMin: 40,
-        exercises: [
-          { id: 'wk-p2-1-b2-e1', exerciseId: 'ex-tactic-lastsec', durationMin: 20 },
-          { id: 'wk-p2-1-b2-e2', exerciseId: 'ex-tactic-lefty', durationMin: 20 },
-        ],
-      },
-      {
-        id: 'wk-p2-1-b3',
-        name: 'Модельные бои',
-        durationMin: 30,
-        exercises: [
-          { id: 'wk-p2-1-b3-e1', exerciseId: 'ex-free-sparring', durationMin: 30 },
-        ],
-      },
-      cooldownBlock('wk-p2-1'),
-    ],
-  },
-  // Вчера — выполненная
-  {
-    id: 'wk-done-1',
-    name: 'Ката + техника',
-    theme: 'Heian Shodan',
-    goal: 'Стабильное выполнение Heian Shodan',
-    date: addDays(todayISO(), -1),
-    time: '16:00',
-    groupId: 'grp-kids-8-9',
-    stage: 'beginner',
-    durationMin: 90,
-    status: 'completed',
-    completedNote: 'Группа хорошо запомнила направления. На следующей тренировке — акцент на одновременность блока и стойки.',
-    blocks: [
-      warmupBlock('wk-done-1'),
-      {
-        id: 'wk-done-1-b2',
-        name: 'Ката',
-        durationMin: 35,
-        exercises: [
-          { id: 'wk-done-1-b2-e1', exerciseId: 'ex-kata-elements', durationMin: 15 },
-          { id: 'wk-done-1-b2-e2', exerciseId: 'ex-heian-shodan', durationMin: 20 },
-        ],
-      },
-      cooldownBlock('wk-done-1'),
-    ],
-  },
-  // Позавчера — выполненная
-  {
-    id: 'wk-done-2',
-    name: 'Атака первым номером',
-    theme: 'Атака первым номером',
-    goal: 'Тайминг входа в атаку',
-    date: addDays(todayISO(), -2),
-    time: '18:00',
-    groupId: 'grp-sport',
-    stage: 'intermediate',
-    durationMin: 120,
-    status: 'completed',
-    completedNote: 'Хороший прогресс у Артёма и Ерасыла. Софии — дополнительная работа над стартовой скоростью.',
-    blocks: [
-      warmupBlock('wk-done-2'),
-      {
-        id: 'wk-done-2-b2',
-        name: 'Работа в парах',
-        durationMin: 40,
-        exercises: [
-          { id: 'wk-done-2-b2-e1', exerciseId: 'ex-first-attack', durationMin: 25 },
-          { id: 'wk-done-2-b2-e2', exerciseId: 'ex-free-sparring', durationMin: 15 },
-        ],
-      },
-      cooldownBlock('wk-done-2'),
-    ],
-  },
+/**
+ * Стартовый набор базовых блоков — по одному-два на этап.
+ * Владелец дополняет и редактирует их в разделе «Блоки».
+ */
+export const seedSharedBlocks: BlockTemplate[] = [
+  makeSharedBlock(
+    'sb-warmup-beg',
+    'Разминка (базовая)',
+    'beginner',
+    'Стандартная разминка: бег, суставная разминка, динамическая растяжка.',
+    [embed('ex-jog'), embed('ex-joint-warmup'), embed('ex-dynamic-stretch')]
+  ),
+  makeSharedBlock(
+    'sb-cooldown-beg',
+    'Заминка (базовая)',
+    'beginner',
+    'Восстановление после тренировки: растяжка и дыхание.',
+    [embed('ex-static-stretch'), embed('ex-breathing')]
+  ),
+  makeSharedBlock(
+    'sb-footwork-beg',
+    'Работа ног (базовая)',
+    'beginner',
+    'Передвижения в стойке и реакция на сигнал.',
+    [embed('ex-footwork-fwd'), embed('ex-reaction-signal')]
+  ),
+  makeSharedBlock(
+    'sb-sfp-int',
+    'СФП: взрывная скорость',
+    'intermediate',
+    'Координационная лестница и взрывной старт из стойки.',
+    [embed('ex-ladder'), embed('ex-explosive-start')]
+  ),
+  makeSharedBlock(
+    'sb-pair-int',
+    'Работа в парах: контратака',
+    'intermediate',
+    'Контратака после сбива и учебное кумитэ.',
+    [embed('ex-counter-combo'), embed('ex-free-sparring')]
+  ),
+  makeSharedBlock(
+    'sb-tactics-adv',
+    'Тактика: концовки боя',
+    'advanced',
+    'Последние секунды боя и работа против левши.',
+    [embed('ex-tactic-lastsec'), embed('ex-tactic-lefty')]
+  ),
 ];

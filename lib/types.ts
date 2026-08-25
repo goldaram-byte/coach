@@ -50,6 +50,30 @@ export interface WorkoutBlock {
 
 export type WorkoutStatus = 'planned' | 'completed';
 
+/**
+ * Шаблон тренировочного блока. Базовые шаблоны создаёт владелец —
+ * они видны всем тренерам (тренер может скрыть их у себя).
+ * Личные шаблоны каждый тренер создаёт для себя.
+ * Упражнения встроены снимком, чтобы блок открывался у любого тренера.
+ */
+export interface TemplateExercise {
+  id: string;
+  exercise: Exercise;
+  durationMin?: number;
+  sets?: number;
+  reps?: number;
+  notes?: string;
+}
+
+export interface BlockTemplate {
+  id: string;
+  name: string;
+  stage: StageId;
+  description?: string;
+  durationMin: number;
+  exercises: TemplateExercise[];
+}
+
 export interface Workout {
   id: string;
   name: string;

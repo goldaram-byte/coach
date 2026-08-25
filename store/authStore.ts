@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { api, ApiError, ApiUser } from '@/lib/api';
 import { useAppStore } from './appStore';
+import { seedSharedBlocks } from '@/lib/seed';
 
 export type AuthStatus =
   | 'loading' // первичная проверка сессии
@@ -31,11 +32,15 @@ const DOMAIN_KEYS = [
   'athletes',
   'competitions',
   'programs',
+  'blockTemplates',
+  'hiddenSharedBlockIds',
 ] as const;
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let sharedTimer: ReturnType<typeof setTimeout> | null = null;
 let syncStarted = false;
 let suppressSync = false;
+let lastShared: unknown = null;
 
 const snapshot = (): string => {
   const s = useAppStore.getState();
@@ -51,6 +56,16 @@ const pushState = async () => {
     useAuthStore.setState({ saveStatus: 'saving' });
     await api.saveState(snapshot());
     useAuthStore.setState({ saveStatus: 'saved' });
+  } catch {
+    useAuthStore.setState({ saveStatus: 'error' });
+  }
+};
+
+const pushShared = async () => {
+  const auth = useAuthStore.getState();
+  if (auth.status !== 'authed' || !auth.user?.isAdmin) return;
+  try {
+    await api.saveShared(JSON.stringify(useAppStore.getState().sharedBlocks));
   } catch {
     useAuthStore.setState({ saveStatus: 'error' });
   }
@@ -72,14 +87,45 @@ const pullState = async () => {
     // на сервере пусто (первый вход) — сохраняем текущее (демо) состояние
     await pushState();
   }
+
+  // Общие (базовые) блоки владельца — единые для всех тренеров
+  try {
+    const shared = await api.getShared();
+    suppressSync = true;
+    if (shared.data) {
+      useAppStore.setState({ sharedBlocks: JSON.parse(shared.data) });
+    } else {
+      // На сервере ещё нет базовых блоков — показываем стартовый набор;
+      // владелец сразу сохраняет его на сервер.
+      useAppStore.setState({ sharedBlocks: seedSharedBlocks });
+      if (useAuthStore.getState().user?.isAdmin) await pushShared();
+    }
+    suppressSync = false;
+  } catch {
+    suppressSync = false;
+  }
+  lastShared = useAppStore.getState().sharedBlocks;
 };
 
 const startSync = () => {
   if (syncStarted) return;
   syncStarted = true;
-  useAppStore.subscribe(() => {
-    if (suppressSync) return;
+  useAppStore.subscribe((s) => {
+    if (suppressSync) {
+      lastShared = s.sharedBlocks;
+      return;
+    }
     if (useAuthStore.getState().status !== 'authed') return;
+
+    // Базовые блоки изменились — владелец публикует их для всех
+    if (s.sharedBlocks !== lastShared) {
+      lastShared = s.sharedBlocks;
+      if (useAuthStore.getState().user?.isAdmin) {
+        if (sharedTimer) clearTimeout(sharedTimer);
+        sharedTimer = setTimeout(pushShared, 1000);
+      }
+    }
+
     if (syncTimer) clearTimeout(syncTimer);
     useAuthStore.setState({ saveStatus: 'saving' });
     syncTimer = setTimeout(pushState, 1500);

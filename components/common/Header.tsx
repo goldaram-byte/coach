@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: '/', label: 'Главная' },
   { href: '/programs', label: 'Программы' },
   { href: '/calendar', label: 'Календарь' },
+  { href: '/blocks', label: 'Блоки' },
   { href: '/exercises', label: 'Упражнения' },
   { href: '/builder', label: 'Конструктор' },
   { href: '/groups', label: 'Группы' },

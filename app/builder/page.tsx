@@ -11,13 +11,15 @@ import {
   Search,
   Save,
   Layers,
+  LibraryBig,
+  Clock,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
 import { useAppStore, genId } from '@/store/appStore';
 import { useHydrated } from '@/lib/useHydrated';
 import { todayISO } from '@/lib/seed';
-import { CATEGORY_LABELS, STAGE_LABELS } from '@/lib/labels';
-import { CategoryId, StageId, Workout, WorkoutBlock } from '@/lib/types';
+import { CATEGORY_LABELS, STAGE_BADGE, STAGE_LABELS, plural } from '@/lib/labels';
+import { BlockTemplate, CategoryId, StageId, Workout, WorkoutBlock } from '@/lib/types';
 
 const DEFAULT_BLOCKS = ['Разминка', 'Работа ног', 'Техническая подготовка', 'Работа в парах', 'СФП', 'Заминка'];
 
@@ -29,6 +31,10 @@ function BuilderInner() {
   const groups = useAppStore((s) => s.groups);
   const exercises = useAppStore((s) => s.exercises);
   const addWorkout = useAppStore((s) => s.addWorkout);
+  const sharedBlocks = useAppStore((s) => s.sharedBlocks);
+  const blockTemplates = useAppStore((s) => s.blockTemplates);
+  const hiddenSharedBlockIds = useAppStore((s) => s.hiddenSharedBlockIds);
+  const upsertExercises = useAppStore((s) => s.upsertExercises);
 
   const [groupId, setGroupId] = useState('');
   const [date, setDate] = useState(search.get('date') ?? todayISO());
@@ -39,6 +45,7 @@ function BuilderInner() {
     { id: genId('blk'), name: 'Разминка', durationMin: 15, exercises: [] },
   ]);
   const [pickerBlockId, setPickerBlockId] = useState<string | null>(null);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerCategory, setPickerCategory] = useState<CategoryId | null>(null);
   const [error, setError] = useState('');
@@ -60,6 +67,29 @@ function BuilderInner() {
       ...bs,
       { id: genId('blk'), name: name ?? 'Новый блок', durationMin: 10, exercises: [] },
     ]);
+
+  const insertTemplate = (t: BlockTemplate) => {
+    // Упражнения из шаблона добавляем в библиотеку тренера (если их ещё нет),
+    // чтобы режим тренировки нашёл их по id
+    upsertExercises(t.exercises.map((te) => te.exercise));
+    setBlocks((bs) => [
+      ...bs,
+      {
+        id: genId('blk'),
+        name: t.name,
+        durationMin: t.durationMin,
+        exercises: t.exercises.map((te) => ({
+          id: genId('we'),
+          exerciseId: te.exercise.id,
+          durationMin: te.durationMin,
+          sets: te.sets,
+          reps: te.reps,
+          notes: te.notes,
+        })),
+      },
+    ]);
+    setTemplatePickerOpen(false);
+  };
 
   const updateBlock = (id: string, patch: Partial<WorkoutBlock>) =>
     setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } : b)));
@@ -310,6 +340,13 @@ function BuilderInner() {
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">
           Добавить блок
         </p>
+        <button
+          onClick={() => setTemplatePickerOpen(true)}
+          className="btn-primary w-full sm:w-auto mb-3"
+        >
+          <LibraryBig className="w-4 h-4" /> Из библиотеки блоков
+        </button>
+        <p className="text-xs text-slate-400 mb-2">…или добавьте пустой блок:</p>
         <div className="flex flex-wrap gap-2">
           {DEFAULT_BLOCKS.map((name) => (
             <button key={name} onClick={() => addBlock(name)} className="btn-secondary text-sm py-1.5">
@@ -331,6 +368,64 @@ function BuilderInner() {
       <button onClick={handleSave} className="btn-primary w-full sm:w-auto text-base py-3">
         <Save className="w-5 h-5" /> Сохранить тренировку
       </button>
+
+      {/* Block template picker modal */}
+      {templatePickerOpen && (() => {
+        const hidden = new Set(hiddenSharedBlockIds);
+        const available = [
+          ...sharedBlocks.filter((b) => !hidden.has(b.id)).map((b) => ({ b, shared: true })),
+          ...blockTemplates.map((b) => ({ b, shared: false })),
+        ].sort((x, y) => (x.b.stage === stage ? -1 : 0) - (y.b.stage === stage ? -1 : 0));
+        return (
+          <div
+            className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center sm:p-4"
+            onClick={() => setTemplatePickerOpen(false)}
+          >
+            <div
+              className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] flex flex-col animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-slate-900 dark:text-white">Библиотека блоков</h3>
+                <button onClick={() => setTemplatePickerOpen(false)} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                {available.map(({ b, shared }) => (
+                  <button
+                    key={b.id}
+                    onClick={() => insertTemplate(b)}
+                    className="w-full text-left px-4 py-3.5 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{b.name}</span>
+                      <span className={STAGE_BADGE[b.stage]}>{STAGE_LABELS[b.stage]}</span>
+                      {shared && <span className="badge-orange">Базовый</span>}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1 flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {b.durationMin} мин
+                      </span>
+                      <span>
+                        {b.exercises.length} {plural(b.exercises.length, 'упражнение', 'упражнения', 'упражнений')}
+                      </span>
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                      {b.exercises.map((te) => te.exercise.name).join(' · ')}
+                    </p>
+                  </button>
+                ))}
+                {available.length === 0 && (
+                  <p className="p-6 text-center text-sm text-slate-400">
+                    Блоков пока нет — создайте их в разделе «Блоки»
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Exercise picker modal */}
       {pickerBlockId && (

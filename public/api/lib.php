@@ -49,6 +49,11 @@ function db(): PDO {
             data TEXT,
             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
         )");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS shared_content (
+            k TEXT PRIMARY KEY,
+            data TEXT,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )");
         return $pdo;
     }
 
@@ -80,6 +85,12 @@ function db(): PDO {
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS coach_state (
         coach_id INT PRIMARY KEY,
+        data MEDIUMTEXT,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS shared_content (
+        k VARCHAR(50) PRIMARY KEY,
         data MEDIUMTEXT,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
