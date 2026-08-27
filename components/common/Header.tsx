@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Главная' },
+  { href: '/plan', label: 'Станд. план' },
   { href: '/programs', label: 'Программы' },
   { href: '/calendar', label: 'Календарь' },
   { href: '/blocks', label: 'Блоки' },
