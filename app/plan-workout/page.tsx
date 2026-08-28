@@ -14,6 +14,7 @@ import {
   Target,
   CheckCircle2,
   Link2,
+  Play,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
 import { useAppStore } from '@/store/appStore';
@@ -23,6 +24,7 @@ import {
   planExerciseById,
   phaseOfWeek,
   convertPlanWorkout,
+  findPlanCopy,
   PLAN_BLOCK_LABELS,
   PLAN_CATEGORY_LABELS,
   PlanExercise,
@@ -112,6 +114,7 @@ function PlanWorkoutInner() {
 
   const addWorkout = useAppStore((s) => s.addWorkout);
   const upsertExercises = useAppStore((s) => s.upsertExercises);
+  const myWorkouts = useAppStore((s) => s.workouts);
   const [date, setDate] = useState(todayISO());
   const [time, setTime] = useState('18:00');
   const [adding, setAdding] = useState(false);
@@ -129,12 +132,29 @@ function PlanWorkoutInner() {
     );
 
   const phase = phaseOfWeek(pw.week);
+  const existingCopy = findPlanCopy(myWorkouts, pw.id);
+
+  const makeCopy = (d: string, t: string) => {
+    const { exercises, workout } = convertPlanWorkout(pw, d, t);
+    upsertExercises(exercises);
+    addWorkout(workout);
+    return workout;
+  };
+
+  // Провести прямо сейчас: берём существующую незавершённую копию
+  // или создаём новую на сегодня и открываем режим проведения.
+  const handleRunNow = () => {
+    setAdding(true);
+    const target =
+      existingCopy && existingCopy.status !== 'completed'
+        ? existingCopy
+        : makeCopy(todayISO(), new Date().toTimeString().slice(0, 5));
+    router.push(`/run?id=${target.id}`);
+  };
 
   const handleAdd = () => {
     setAdding(true);
-    const { exercises, workout } = convertPlanWorkout(pw, date, time);
-    upsertExercises(exercises);
-    addWorkout(workout);
+    const workout = makeCopy(date, time);
     router.push(`/workout?id=${workout.id}`);
   };
 
@@ -175,37 +195,56 @@ function PlanWorkoutInner() {
         </div>
       )}
 
-      {/* Взять в свой план */}
-      <div className="card p-4 mb-6 flex items-end gap-3 flex-wrap">
-        <div>
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
-            Дата
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="input-base"
-          />
+      {/* Провести или запланировать */}
+      <div className="card p-4 mb-6">
+        {existingCopy?.status === 'completed' && (
+          <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 mb-3">
+            <CheckCircle2 className="w-4 h-4" /> Эта тренировка уже проведена
+          </p>
+        )}
+        <div className="flex items-end gap-3 flex-wrap">
+          <button
+            onClick={handleRunNow}
+            disabled={adding}
+            className="btn-primary text-base px-6 py-3"
+          >
+            <Play className="w-5 h-5" />
+            {adding
+              ? 'Открываем…'
+              : existingCopy?.status === 'completed'
+              ? 'Провести ещё раз'
+              : 'Провести сейчас'}
+          </button>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+              Дата
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="input-base"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+              Время
+            </label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="input-base"
+            />
+          </div>
+          <button onClick={handleAdd} disabled={adding} className="btn-secondary">
+            <CopyPlus className="w-4 h-4" /> Запланировать
+          </button>
         </div>
-        <div>
-          <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
-            Время
-          </label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="input-base"
-          />
-        </div>
-        <button onClick={handleAdd} disabled={adding} className="btn-primary">
-          <CopyPlus className="w-4 h-4" />
-          {adding ? 'Добавляем…' : 'Взять в мои тренировки'}
-        </button>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 basis-full">
-          Создаётся копия в ваших тренировках — её можно проводить с таймером и отмечать
-          выполнение. Сам стандартный план при этом не меняется.
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-2">
+          «Провести сейчас» открывает пошаговый режим — ведите занятие прямо с телефона,
+          отмечая выполненные упражнения (время засекайте на своём секундомере).
+          «Запланировать» добавит занятие в ваши тренировки на выбранную дату.
         </p>
       </div>
 

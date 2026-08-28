@@ -10,6 +10,7 @@ import {
   Dumbbell,
   BookOpen,
   Hammer,
+  ListChecks,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
 import WorkoutCard from '@/components/workouts/WorkoutCard';
@@ -17,6 +18,7 @@ import { useAppStore } from '@/store/appStore';
 import { useHydrated } from '@/lib/useHydrated';
 import { todayISO } from '@/lib/seed';
 import { formatDateFullRu, formatDateRu, plural } from '@/lib/labels';
+import { planProgress, nextPlanWorkout, planWorkouts } from '@/lib/year1';
 
 export default function Dashboard() {
   const hydrated = useHydrated();
@@ -102,6 +104,34 @@ export default function Dashboard() {
           </Link>
         )}
       </div>
+
+      {/* Next plan workout */}
+      {(() => {
+        const { done } = planProgress(workouts);
+        const next = nextPlanWorkout(done);
+        if (!next) return null;
+        return (
+          <Link
+            href={`/plan-workout?id=${next.id}`}
+            className="card-hover p-5 mb-6 flex items-center justify-between gap-4 no-underline block border-ocean-200 dark:border-ocean-800"
+          >
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-ocean-500 to-ocean-700 flex items-center justify-center shadow-md shadow-ocean-600/30 shrink-0">
+                <ListChecks className="w-6 h-6 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-ocean-600 dark:text-ocean-400">
+                  Следующая по стандартному плану · {done.size}/{planWorkouts.length}
+                </p>
+                <h3 className="font-bold text-slate-900 dark:text-white truncate">
+                  Неделя {next.week} · Занятие {next.session} — {next.theme}
+                </h3>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
+          </Link>
+        );
+      })()}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">

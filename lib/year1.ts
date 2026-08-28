@@ -114,6 +114,38 @@ export const planWorkoutById = (id: string): PlanWorkout | undefined =>
 export const phaseOfWeek = (week: number): PlanPhase | undefined =>
   planPhases.find((p) => p.weeks.includes(week));
 
+// ---------- Прогресс тренера по стандартному плану ----------
+
+const orderedPlanWorkouts = planWorkouts
+  .slice()
+  .sort((a, b) => a.week - b.week || a.session.localeCompare(b.session));
+
+/**
+ * Определяет по личным тренировкам тренера, какие занятия стандартного
+ * плана уже проведены, а какие запланированы (по префиксу id копии).
+ */
+export const planProgress = (
+  workouts: Workout[]
+): { done: Set<string>; planned: Set<string> } => {
+  const done = new Set<string>();
+  const planned = new Set<string>();
+  for (const w of workouts) {
+    const m = w.id.match(/^wk-y1-(W\d{2}[ABC])-/);
+    if (!m) continue;
+    if (w.status === 'completed') done.add(m[1]);
+    else planned.add(m[1]);
+  }
+  return { done, planned };
+};
+
+/** Первое занятие плана, которое ещё не проведено. */
+export const nextPlanWorkout = (done: Set<string>): PlanWorkout | undefined =>
+  orderedPlanWorkouts.find((w) => !done.has(w.id));
+
+/** Копия занятия плана в личных тренировках (если уже есть). */
+export const findPlanCopy = (workouts: Workout[], planId: string): Workout | undefined =>
+  workouts.find((w) => w.id.startsWith(`wk-y1-${planId}-`));
+
 // ---------- Конвертация в личный план тренера ----------
 
 const CATEGORY_MAP: Record<string, CategoryId> = {

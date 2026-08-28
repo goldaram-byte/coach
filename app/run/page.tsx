@@ -1,16 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   X,
   ChevronLeft,
-  ChevronRight,
   Check,
-  Play,
-  Pause,
-  RotateCcw,
+  Clock,
   Video,
   SkipForward,
   Flag,
@@ -61,33 +58,17 @@ function WorkoutRunInner() {
   }, [workout]);
 
   const [index, setIndex] = useState(0);
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [running, setRunning] = useState(true);
   const [showVideo, setShowVideo] = useState(false);
   const [finished, setFinished] = useState(false);
   const [note, setNote] = useState('');
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const current = flat[index];
   const exercise = current ? exercises.find((e) => e.id === current.exerciseId) : undefined;
 
-  // (Re)start countdown when exercise changes
+  // Скрыть видео при смене упражнения
   useEffect(() => {
-    if (!current) return;
-    setSecondsLeft((current.durationMin ?? 3) * 60);
-    setRunning(true);
     setShowVideo(false);
-  }, [index, current?.weId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!running || finished) return;
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [running, finished]);
+  }, [index]);
 
   if (!hydrated) {
     return <div className="min-h-screen bg-slate-950" />;
@@ -107,11 +88,6 @@ function WorkoutRunInner() {
   const done = new Set(workout.completedExerciseIds ?? []);
   const doneCount = flat.filter((f) => done.has(f.weId)).length;
   const totalBlocks = workout.blocks.length;
-
-  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
-  const ss = String(secondsLeft % 60).padStart(2, '0');
-  const timerTotal = (current?.durationMin ?? 3) * 60;
-  const timerProgress = timerTotal > 0 ? ((timerTotal - secondsLeft) / timerTotal) * 100 : 0;
 
   const goNext = () => {
     if (index < flat.length - 1) setIndex(index + 1);
@@ -234,71 +210,20 @@ function WorkoutRunInner() {
           </p>
         )}
 
-        {/* Timer */}
-        <div className="relative mt-8 mb-6">
-          <svg width="220" height="220" viewBox="0 0 220 220" className="-rotate-90">
-            <circle cx="110" cy="110" r="100" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="10" />
-            <circle
-              cx="110"
-              cy="110"
-              r="100"
-              fill="none"
-              stroke="url(#timerGrad)"
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 100}
-              strokeDashoffset={2 * Math.PI * 100 * (1 - timerProgress / 100)}
-              className="transition-all duration-1000"
-            />
-            <defs>
-              <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fb923c" />
-                <stop offset="100%" stopColor="#f97316" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className={`text-5xl font-extrabold tabular-nums ${
-                secondsLeft === 0 ? 'text-brand-400 animate-pulse' : 'text-white'
-              }`}
-            >
-              {mm}:{ss}
+        {/* Рекомендуемое время + видео (тренер засекает на своём секундомере) */}
+        <div className="flex items-center gap-3 mt-6 mb-6">
+          {current.durationMin && (
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-ocean-100 font-semibold">
+              <Clock className="w-4 h-4 text-brand-400" /> ~{current.durationMin} мин
             </span>
-            <span className="text-xs text-ocean-300 mt-1 uppercase tracking-wider">
-              {secondsLeft === 0 ? 'Время вышло' : 'Осталось'}
-            </span>
-          </div>
-        </div>
-
-        {/* Timer controls */}
-        <div className="flex items-center gap-3 mb-6">
-          <button
-            onClick={() => setSecondsLeft((current.durationMin ?? 3) * 60)}
-            className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            title="Сбросить таймер"
-          >
-            <RotateCcw className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setRunning(!running)}
-            className="p-5 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 shadow-glow transition-all active:scale-95"
-            title={running ? 'Пауза' : 'Продолжить'}
-          >
-            {running ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-0.5" />}
-          </button>
-          {exercise && exercise.videos.length > 0 ? (
+          )}
+          {exercise && exercise.videos.length > 0 && (
             <button
               onClick={() => setShowVideo(true)}
-              className="p-3 rounded-full bg-ocean-600/60 hover:bg-ocean-600 transition-colors"
-              title="Смотреть видео"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-ocean-600/60 hover:bg-ocean-600 transition-colors font-semibold"
             >
-              <Video className="w-5 h-5" />
+              <Video className="w-4 h-4" /> Видео
             </button>
-          ) : (
-            <div className="p-3 rounded-full bg-white/5 text-white/30">
-              <Video className="w-5 h-5" />
-            </div>
           )}
         </div>
 

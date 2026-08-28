@@ -10,12 +10,17 @@ import {
   Clock,
   ClipboardCheck,
   Layers,
+  CheckCircle2,
+  CalendarClock,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
+import { useAppStore } from '@/store/appStore';
+import { useHydrated } from '@/lib/useHydrated';
 import {
   planWeekWorkouts,
   phaseOfWeek,
   planAssessments,
+  planProgress,
   PLAN_BLOCK_LABELS,
 } from '@/lib/year1';
 
@@ -25,6 +30,11 @@ function PlanWeekInner() {
   const workouts = planWeekWorkouts(week);
   const phase = phaseOfWeek(week);
   const isAssess = planAssessments.weeks.includes(week);
+  const hydrated = useHydrated();
+  const myWorkouts = useAppStore((s) => s.workouts);
+  const { done, planned } = hydrated
+    ? planProgress(myWorkouts)
+    : { done: new Set<string>(), planned: new Set<string>() };
 
   return (
     <PageShell>
@@ -99,7 +109,7 @@ function PlanWeekInner() {
                   <div className="font-bold text-slate-900 dark:text-white truncate">
                     Занятие {w.session} · {w.theme}
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3 mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-3 mt-0.5 flex-wrap">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" /> {w.duration_min} мин
                     </span>
@@ -110,6 +120,16 @@ function PlanWeekInner() {
                     <span className="font-semibold text-brand-600 dark:text-brand-400">
                       {w.progression}
                     </span>
+                    {done.has(w.id) && (
+                      <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Проведена
+                      </span>
+                    )}
+                    {!done.has(w.id) && planned.has(w.id) && (
+                      <span className="flex items-center gap-1 font-semibold text-ocean-600 dark:text-ocean-400">
+                        <CalendarClock className="w-3.5 h-3.5" /> Запланирована
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

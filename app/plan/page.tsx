@@ -11,13 +11,19 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
+  Play,
+  Check,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
+import { useAppStore } from '@/store/appStore';
+import { useHydrated } from '@/lib/useHydrated';
 import {
   planPhases,
   planWorkouts,
   planExercises,
   planAssessments,
+  planProgress,
+  nextPlanWorkout,
 } from '@/lib/year1';
 
 const RULES = [
@@ -34,6 +40,12 @@ const RULES = [
 
 export default function PlanPage() {
   const [rulesOpen, setRulesOpen] = useState(false);
+  const hydrated = useHydrated();
+  const workouts = useAppStore((s) => s.workouts);
+
+  const { done } = hydrated ? planProgress(workouts) : { done: new Set<string>() };
+  const next = nextPlanWorkout(done);
+  const donePct = Math.round((done.size / planWorkouts.length) * 100);
 
   return (
     <PageShell>
@@ -89,6 +101,43 @@ export default function PlanPage() {
         </div>
       </div>
 
+      {/* Следующая тренировка по плану */}
+      {hydrated && next && (
+        <div className="card p-5 mb-6 border-ocean-200 dark:border-ocean-800">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className="text-xs font-bold uppercase tracking-wider text-ocean-600 dark:text-ocean-400 mb-1">
+                Ваша следующая тренировка по плану
+              </div>
+              <div className="font-extrabold text-slate-900 dark:text-white">
+                Неделя {next.week} · Занятие {next.session} — {next.theme}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {next.phase} · {next.duration_min} мин · уровень {next.progression}
+              </div>
+            </div>
+            <Link
+              href={`/plan-workout?id=${next.id}`}
+              className="btn-primary no-underline shrink-0"
+            >
+              <Play className="w-4 h-4" /> Открыть и провести
+            </Link>
+          </div>
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <span>Проведено {done.size} из {planWorkouts.length} тренировок</span>
+              <span className="font-bold text-brand-600">{donePct}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-ocean-500 transition-all"
+                style={{ width: `${Math.max(donePct, done.size > 0 ? 2 : 0)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Неподвижные правила */}
       <div className="card p-5 mb-6">
         <button
@@ -130,21 +179,32 @@ export default function PlanPage() {
             <div className="flex flex-wrap gap-1.5">
               {phase.weeks.map((w) => {
                 const isAssess = planAssessments.weeks.includes(w);
+                const weekDone =
+                  hydrated &&
+                  planWorkouts
+                    .filter((x) => x.week === w)
+                    .every((x) => done.has(x.id));
                 return (
                   <Link
                     key={w}
                     href={`/plan-week?w=${w}`}
                     title={
                       planWorkouts.find((x) => x.week === w)?.theme +
-                      (isAssess ? ' · контрольная неделя' : '')
+                      (isAssess ? ' · контрольная неделя' : '') +
+                      (weekDone ? ' · проведена' : '')
                     }
-                    className={`no-underline w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors ${
-                      isAssess
+                    className={`no-underline relative w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-colors ${
+                      weekDone
+                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25'
+                        : isAssess
                         ? 'bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-md shadow-brand-500/25'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-ocean-100 dark:hover:bg-ocean-900/40 hover:text-ocean-700'
                     }`}
                   >
                     {w}
+                    {weekDone && (
+                      <Check className="w-3 h-3 absolute -top-1 -right-1 bg-white dark:bg-slate-900 text-emerald-500 rounded-full p-[1px]" />
+                    )}
                   </Link>
                 );
               })}
