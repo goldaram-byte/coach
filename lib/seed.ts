@@ -759,178 +759,18 @@ export const seedPrograms: Program[] = [
 
 // ---------- Groups ----------
 
-export const seedGroups: Group[] = [
-  {
-    id: 'grp-kids-6-7',
-    name: 'Дети 6–7 лет',
-    ageMin: 6,
-    ageMax: 7,
-    stage: 'beginner',
-    schedule: [
-      { weekday: 0, time: '16:00' },
-      { weekday: 2, time: '16:00' },
-      { weekday: 4, time: '16:00' },
-    ],
-    programId: 'prog-beginner',
-  },
-  {
-    id: 'grp-kids-8-9',
-    name: 'Дети 8–9 лет',
-    ageMin: 8,
-    ageMax: 9,
-    stage: 'beginner',
-    schedule: [
-      { weekday: 1, time: '16:00' },
-      { weekday: 3, time: '16:00' },
-      { weekday: 5, time: '11:00' },
-    ],
-    programId: 'prog-beginner',
-  },
-  {
-    id: 'grp-sport',
-    name: 'Спортивная группа',
-    ageMin: 10,
-    ageMax: 14,
-    stage: 'intermediate',
-    schedule: [
-      { weekday: 0, time: '18:00' },
-      { weekday: 1, time: '18:00' },
-      { weekday: 2, time: '18:00' },
-      { weekday: 4, time: '18:00' },
-      { weekday: 5, time: '12:30' },
-    ],
-    programId: 'prog-intermediate',
-  },
-  {
-    id: 'grp-elite',
-    name: 'Сборная',
-    ageMin: 14,
-    ageMax: 17,
-    stage: 'advanced',
-    schedule: [
-      { weekday: 0, time: '19:30' },
-      { weekday: 2, time: '19:30' },
-      { weekday: 4, time: '19:30' },
-      { weekday: 5, time: '14:00' },
-    ],
-    programId: 'prog-advanced',
-  },
-];
+// Демо-группы убраны: каждый тренер создаёт свои группы сам
+export const seedGroups: Group[] = [];
 
 // ---------- Athletes ----------
 
-export const seedAthletes: Athlete[] = [
-  {
-    id: 'ath-1',
-    firstName: 'Артём',
-    lastName: 'Ким',
-    birthDate: '2012-04-15',
-    weightKg: 42,
-    category: 'Кумитэ −45 кг',
-    experienceYears: 4,
-    rank: '2 юн. разряд',
-    groupId: 'grp-sport',
-    skills: { speed: 8, reaction: 7, technique: 7, tactics: 6, endurance: 7, strength: 6, flexibility: 8, psychology: 7 },
-    goals: ['Стабильный gyaku-zuki в контратаке', 'Призовое место на первенстве города'],
-  },
-  {
-    id: 'ath-2',
-    firstName: 'София',
-    lastName: 'Ахметова',
-    birthDate: '2013-09-02',
-    weightKg: 36,
-    category: 'Кумитэ −40 кг',
-    experienceYears: 3,
-    rank: '3 юн. разряд',
-    groupId: 'grp-sport',
-    skills: { speed: 7, reaction: 8, technique: 8, tactics: 6, endurance: 6, strength: 5, flexibility: 9, psychology: 8 },
-    goals: ['Уверенная работа первым номером', 'Освоить mawashi-geri jodan'],
-  },
-  {
-    id: 'ath-3',
-    firstName: 'Данияр',
-    lastName: 'Сулейменов',
-    birthDate: '2010-01-20',
-    weightKg: 55,
-    category: 'Кумитэ −57 кг',
-    experienceYears: 6,
-    rank: '1 юн. разряд',
-    groupId: 'grp-elite',
-    skills: { speed: 9, reaction: 8, technique: 8, tactics: 8, endurance: 8, strength: 7, flexibility: 7, psychology: 7 },
-    goals: ['Отбор в сборную области', 'Улучшить работу в концовках боёв'],
-  },
-  {
-    id: 'ath-4',
-    firstName: 'Алина',
-    lastName: 'Петрова',
-    birthDate: '2016-06-11',
-    weightKg: 24,
-    category: 'Ката',
-    experienceYears: 1,
-    groupId: 'grp-kids-8-9',
-    skills: { speed: 5, reaction: 5, technique: 6, tactics: 3, endurance: 5, strength: 4, flexibility: 8, psychology: 6 },
-    goals: ['Heian Shodan без ошибок', 'Участие в первом турнире'],
-  },
-  {
-    id: 'ath-5',
-    firstName: 'Мирас',
-    lastName: 'Жанибеков',
-    birthDate: '2017-03-08',
-    weightKg: 22,
-    experienceYears: 1,
-    groupId: 'grp-kids-6-7',
-    skills: { speed: 5, reaction: 6, technique: 4, tactics: 2, endurance: 5, strength: 4, flexibility: 7, psychology: 5 },
-    goals: ['Уверенная боевая стойка', 'Дисциплина на тренировке'],
-  },
-  {
-    id: 'ath-6',
-    firstName: 'Ерасыл',
-    lastName: 'Токтаров',
-    birthDate: '2011-11-30',
-    weightKg: 47,
-    category: 'Кумитэ −50 кг',
-    experienceYears: 5,
-    rank: '1 юн. разряд',
-    groupId: 'grp-sport',
-    skills: { speed: 8, reaction: 7, technique: 7, tactics: 7, endurance: 9, strength: 7, flexibility: 6, psychology: 8 },
-    goals: ['Серийные атаки', 'Финал областного первенства'],
-  },
-];
+// Демо-спортсмены убраны: тренер добавляет своих спортсменов
+export const seedAthletes: Athlete[] = [];
 
 // ---------- Competitions ----------
 
-export const seedCompetitions: Competition[] = [
-  {
-    id: 'comp-1',
-    name: 'Первенство города по каратэ WKF',
-    date: addDays(todayISO(), 16),
-    location: 'Дворец спорта «Центральный»',
-    category: 'Дети, кадеты',
-    athleteIds: ['ath-1', 'ath-2', 'ath-6'],
-    results: [],
-  },
-  {
-    id: 'comp-2',
-    name: 'Областное первенство',
-    date: addDays(todayISO(), 44),
-    location: 'СК «Олимп»',
-    category: 'Кадеты, юниоры',
-    athleteIds: ['ath-3', 'ath-6'],
-    results: [],
-  },
-  {
-    id: 'comp-3',
-    name: 'Клубный турнир «Первый татами»',
-    date: addDays(todayISO(), -20),
-    location: 'Наш зал',
-    category: 'Новички 6–9 лет',
-    athleteIds: ['ath-4', 'ath-5'],
-    results: [
-      { athleteId: 'ath-4', place: 2, fights: 3, wins: 2, note: 'Хорошая стойка, работать над реакцией' },
-      { athleteId: 'ath-5', place: 3, fights: 3, wins: 1, note: 'Первый турнир, справился с волнением' },
-    ],
-  },
-];
+// Демо-соревнования убраны
+export const seedCompetitions: Competition[] = [];
 
 // ---------- Workouts ----------
 

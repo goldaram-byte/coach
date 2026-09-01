@@ -1,31 +1,33 @@
 'use client';
 
-import { Menu, X, RotateCcw, LogOut, ShieldCheck, Cloud, CloudOff, UploadCloud } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, ShieldCheck, Cloud, CloudOff, UploadCloud } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 
 const NAV_ITEMS = [
-  { href: '/', label: 'Главная' },
-  { href: '/plan', label: 'Станд. план' },
-  { href: '/programs', label: 'Программы' },
-  { href: '/calendar', label: 'Календарь' },
-  { href: '/blocks', label: 'Блоки' },
+  { href: '/', label: 'План' },
+  { href: '/workouts', label: 'Тренировки' },
   { href: '/exercises', label: 'Упражнения' },
-  { href: '/builder', label: 'Конструктор' },
   { href: '/groups', label: 'Группы' },
+];
+
+const MORE_ITEMS = [
   { href: '/athletes', label: 'Спортсмены' },
+  { href: '/calendar', label: 'Календарь' },
+  { href: '/builder', label: 'Конструктор' },
+  { href: '/blocks', label: 'Блоки' },
+  { href: '/programs', label: 'Программы' },
   { href: '/competitions', label: 'Соревнования' },
   { href: '/analytics', label: 'Аналитика' },
 ];
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const resetDemo = useAppStore((s) => s.resetDemo);
 
   const authStatus = useAuthStore((s) => s.status);
   const user = useAuthStore((s) => s.user);
@@ -69,7 +71,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Menu */}
-          <nav className="hidden lg:flex items-center gap-1 overflow-x-auto">
+          <nav className="hidden lg:flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
@@ -83,6 +85,39 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
+            <div className="relative">
+              <button
+                onClick={() => setMoreOpen(!moreOpen)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  MORE_ITEMS.some((i) => isActive(i.href))
+                    ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                Ещё <ChevronDown className="w-3.5 h-3.5" />
+              </button>
+              {moreOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl py-2 min-w-[180px] animate-fade-in">
+                    {MORE_ITEMS.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMoreOpen(false)}
+                        className={`block px-4 py-2 text-sm font-medium no-underline ${
+                          isActive(item.href)
+                            ? 'text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -127,16 +162,6 @@ export default function Header() {
               </Link>
             )}
 
-            <button
-              onClick={() => {
-                if (confirm('Сбросить все данные к демо-версии?')) resetDemo();
-              }}
-              title="Сбросить демо-данные"
-              className="hidden sm:flex p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
             <div
               className="w-9 h-9 bg-gradient-to-br from-ocean-500 to-ocean-700 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-md shadow-ocean-600/30"
               title={user ? `${user.name} · ${user.email}` : 'Тренер'}
@@ -168,7 +193,7 @@ export default function Header() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <nav className="lg:hidden border-t border-slate-100 dark:border-slate-800 py-2 grid grid-cols-2 gap-1 animate-fade-in">
-            {NAV_ITEMS.map((item) => (
+            {[...NAV_ITEMS, ...MORE_ITEMS].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

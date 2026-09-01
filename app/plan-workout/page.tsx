@@ -124,7 +124,7 @@ function PlanWorkoutInner() {
       <PageShell>
         <div className="card p-10 text-center">
           <p className="text-slate-500 dark:text-slate-400 mb-4">Тренировка не найдена</p>
-          <Link href="/plan" className="btn-primary no-underline">
+          <Link href="/" className="btn-primary no-underline">
             К стандартному плану
           </Link>
         </div>

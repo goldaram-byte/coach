@@ -38,8 +38,8 @@ function PlanWeekInner() {
 
   return (
     <PageShell>
-      <Link href="/plan" className="btn-ghost -ml-2 mb-4 no-underline inline-flex">
-        <ArrowLeft className="w-4 h-4" /> Стандартный план
+      <Link href="/" className="btn-ghost -ml-2 mb-4 no-underline inline-flex">
+        <ArrowLeft className="w-4 h-4" /> К плану
       </Link>
 
       <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
