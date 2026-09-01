@@ -38,9 +38,11 @@ const DOMAIN_KEYS = [
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 let sharedTimer: ReturnType<typeof setTimeout> | null = null;
+let planVideosTimer: ReturnType<typeof setTimeout> | null = null;
 let syncStarted = false;
 let suppressSync = false;
 let lastShared: unknown = null;
+let lastPlanVideos: unknown = null;
 
 const snapshot = (): string => {
   const s = useAppStore.getState();
@@ -66,6 +68,16 @@ const pushShared = async () => {
   if (auth.status !== 'authed' || !auth.user?.isAdmin) return;
   try {
     await api.saveShared(JSON.stringify(useAppStore.getState().sharedBlocks));
+  } catch {
+    useAuthStore.setState({ saveStatus: 'error' });
+  }
+};
+
+const pushPlanVideos = async () => {
+  const auth = useAuthStore.getState();
+  if (auth.status !== 'authed' || !auth.user?.isAdmin) return;
+  try {
+    await api.saveShared(JSON.stringify(useAppStore.getState().planVideos), 'plan_videos');
   } catch {
     useAuthStore.setState({ saveStatus: 'error' });
   }
@@ -105,6 +117,19 @@ const pullState = async () => {
     suppressSync = false;
   }
   lastShared = useAppStore.getState().sharedBlocks;
+
+  // Видео стандартного плана — единые для всех тренеров
+  try {
+    const videos = await api.getShared('plan_videos');
+    if (videos.data) {
+      suppressSync = true;
+      useAppStore.setState({ planVideos: JSON.parse(videos.data) });
+      suppressSync = false;
+    }
+  } catch {
+    suppressSync = false;
+  }
+  lastPlanVideos = useAppStore.getState().planVideos;
 };
 
 const startSync = () => {
@@ -113,6 +138,7 @@ const startSync = () => {
   useAppStore.subscribe((s) => {
     if (suppressSync) {
       lastShared = s.sharedBlocks;
+      lastPlanVideos = s.planVideos;
       return;
     }
     if (useAuthStore.getState().status !== 'authed') return;
@@ -123,6 +149,15 @@ const startSync = () => {
       if (useAuthStore.getState().user?.isAdmin) {
         if (sharedTimer) clearTimeout(sharedTimer);
         sharedTimer = setTimeout(pushShared, 1000);
+      }
+    }
+
+    // Видео плана изменились — владелец публикует их для всех
+    if (s.planVideos !== lastPlanVideos) {
+      lastPlanVideos = s.planVideos;
+      if (useAuthStore.getState().user?.isAdmin) {
+        if (planVideosTimer) clearTimeout(planVideosTimer);
+        planVideosTimer = setTimeout(pushPlanVideos, 1000);
       }
     }
 

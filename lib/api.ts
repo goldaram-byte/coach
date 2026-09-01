@@ -69,10 +69,11 @@ export const api = {
       body: JSON.stringify({ data }),
     }),
 
-  getShared: () => request<{ data: string | null; updatedAt: string | null }>('shared.php'),
+  getShared: (key = 'blocks') =>
+    request<{ data: string | null; updatedAt: string | null }>(`shared.php?k=${key}`),
 
-  saveShared: (data: string) =>
-    request<{ ok: boolean }>('shared.php', {
+  saveShared: (data: string, key = 'blocks') =>
+    request<{ ok: boolean }>(`shared.php?k=${key}`, {
       method: 'POST',
       body: JSON.stringify({ data }),
     }),

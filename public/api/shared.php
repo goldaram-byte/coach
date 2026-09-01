@@ -1,13 +1,18 @@
 <?php
 require_once __DIR__ . '/lib.php';
 
-// Общий контент (базовые блоки тренировок): читают все активные
-// тренеры, изменяет только владелец.
+// Общий контент: читают все активные тренеры, изменяет только владелец.
+// Ключи: blocks — базовые блоки тренировок,
+//        plan_videos — видео к упражнениям стандартного плана.
+
+$allowed_keys = ['blocks', 'plan_videos'];
+$key = $_GET['k'] ?? 'blocks';
+if (!in_array($key, $allowed_keys, true)) json_error('invalid_key');
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     require_active();
     $stmt = db()->prepare('SELECT data, updated_at FROM shared_content WHERE k = ?');
-    $stmt->execute(['blocks']);
+    $stmt->execute([$key]);
     $row = $stmt->fetch();
     json_out([
         'data' => $row ? $row['data'] : null,
@@ -27,13 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $pdo = db();
     $exists = $pdo->prepare('SELECT k FROM shared_content WHERE k = ?');
-    $exists->execute(['blocks']);
+    $exists->execute([$key]);
     if ($exists->fetch()) {
         $pdo->prepare('UPDATE shared_content SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE k = ?')
-            ->execute([$data, 'blocks']);
+            ->execute([$data, $key]);
     } else {
         $pdo->prepare('INSERT INTO shared_content (k, data) VALUES (?, ?)')
-            ->execute(['blocks', $data]);
+            ->execute([$key, $data]);
     }
     json_out(['ok' => true]);
 }

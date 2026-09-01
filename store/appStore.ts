@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import {
   Exercise,
+  ExerciseVideo,
   Workout,
   Group,
   Athlete,
@@ -38,6 +39,13 @@ interface AppState {
   blockTemplates: BlockTemplate[];
   /** Базовые блоки, скрытые текущим тренером */
   hiddenSharedBlockIds: string[];
+  /** Видео к упражнениям стандартного плана: добавляет владелец, видят все */
+  planVideos: Record<string, ExerciseVideo[]>;
+
+  // Стандартный план: видео
+  setPlanVideos: (v: Record<string, ExerciseVideo[]>) => void;
+  addPlanVideo: (exerciseId: string, video: ExerciseVideo) => void;
+  deletePlanVideo: (exerciseId: string, videoId: string) => void;
 
   // Block templates
   setSharedBlocks: (blocks: BlockTemplate[]) => void;
@@ -93,6 +101,23 @@ export const useAppStore = create<AppState>()(
       sharedBlocks: seedSharedBlocks,
       blockTemplates: [],
       hiddenSharedBlockIds: [],
+      planVideos: {},
+
+      setPlanVideos: (v) => set({ planVideos: v }),
+      addPlanVideo: (exerciseId, video) =>
+        set((s) => ({
+          planVideos: {
+            ...s.planVideos,
+            [exerciseId]: [...(s.planVideos[exerciseId] ?? []), video],
+          },
+        })),
+      deletePlanVideo: (exerciseId, videoId) =>
+        set((s) => ({
+          planVideos: {
+            ...s.planVideos,
+            [exerciseId]: (s.planVideos[exerciseId] ?? []).filter((v) => v.id !== videoId),
+          },
+        })),
 
       setSharedBlocks: (blocks) => set({ sharedBlocks: blocks }),
       addSharedBlock: (b) => set((s) => ({ sharedBlocks: [b, ...s.sharedBlocks] })),

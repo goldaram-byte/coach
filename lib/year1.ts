@@ -2,7 +2,7 @@
 // «Начальная подготовка, 1 год обучения» (WKF Kumite).
 // Методика зашита в приложение и не может быть изменена тренерами.
 
-import { CategoryId, Exercise, Workout, WorkoutBlock } from './types';
+import { CategoryId, Exercise, ExerciseVideo, Workout, WorkoutBlock } from './types';
 import exercisesJson from './data/year1-exercises.json';
 import workoutsJson from './data/year1-workouts.json';
 import assessmentsJson from './data/year1-assessments.json';
@@ -197,7 +197,8 @@ const CATEGORY_MAP: Record<string, CategoryId> = {
 export const planExerciseToExercise = (
   pe: PlanExercise,
   durationMin: number,
-  progression = 'L1'
+  progression = 'L1',
+  videos: ExerciseVideo[] = []
 ): Exercise => {
   const lvls = progressionLevels(progression);
   let execution =
@@ -226,7 +227,7 @@ export const planExerciseToExercise = (
     commonMistakes: pe.common_errors.join('; '),
     simplifiedVariant: pe.levels.L1,
     advancedVariant: pe.levels.L3,
-    videos: [],
+    videos,
   };
 };
 
@@ -239,7 +240,8 @@ const rand = () => Math.random().toString(36).slice(2, 8);
 export const convertPlanWorkout = (
   pw: PlanWorkout,
   date: string,
-  time: string
+  time: string,
+  planVideos: Record<string, ExerciseVideo[]> = {}
 ): { exercises: Exercise[]; workout: Workout } => {
   const exMap = new Map<string, Exercise>();
   const blocks: WorkoutBlock[] = pw.blocks.map((b, bi) => {
@@ -253,7 +255,11 @@ export const convertPlanWorkout = (
       durationMin: b.duration_min,
       exercises: ids.map((eid, ei) => {
         const pe = planExerciseById[eid];
-        if (pe && !exMap.has(eid)) exMap.set(eid, planExerciseToExercise(pe, per, pw.progression));
+        if (pe && !exMap.has(eid))
+          exMap.set(
+            eid,
+            planExerciseToExercise(pe, per, pw.progression, planVideos[eid] ?? [])
+          );
         return {
           id: `we-y1-${pw.id}-${bi}-${ei}-${rand()}`,
           exerciseId: 'y1-' + eid,

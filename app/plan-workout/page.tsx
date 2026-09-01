@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useState } from 'react';
+import { Suspense, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
@@ -15,9 +15,16 @@ import {
   CheckCircle2,
   Link2,
   Play,
+  Video,
+  Trash2,
+  Loader2,
+  X,
 } from 'lucide-react';
 import PageShell from '@/components/common/PageShell';
-import { useAppStore } from '@/store/appStore';
+import { useAppStore, genId } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
+import { api, apiErrorText } from '@/lib/api';
+import { ExerciseVideo } from '@/lib/types';
 import { todayISO } from '@/lib/seed';
 import {
   planWorkoutById,
@@ -32,6 +39,8 @@ import {
   PlanExercise,
 } from '@/lib/year1';
 
+const NO_VIDEOS: ExerciseVideo[] = [];
+
 function ExerciseCard({
   ex,
   progression,
@@ -42,7 +51,35 @@ function ExerciseCard({
   index: number;
 }) {
   const [open, setOpen] = useState(false);
+  const [playing, setPlaying] = useState<ExerciseVideo | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
   const lvls = progressionLevels(progression);
+
+  const videos = useAppStore((s) => s.planVideos[ex.id] ?? NO_VIDEOS);
+  const addPlanVideo = useAppStore((s) => s.addPlanVideo);
+  const deletePlanVideo = useAppStore((s) => s.deletePlanVideo);
+  const authStatus = useAuthStore((s) => s.status);
+  const user = useAuthStore((s) => s.user);
+  const canManageVideos = authStatus === 'authed' && !!user?.isAdmin;
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    setUploadError('');
+    try {
+      const { url } = await api.uploadVideo(file);
+      addPlanVideo(ex.id, {
+        id: genId('vid'),
+        title: file.name.replace(/\.[^.]+$/, ''),
+        url,
+      });
+    } catch (e) {
+      setUploadError(apiErrorText(e));
+    }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = '';
+  };
   return (
     <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl overflow-hidden">
       <button
@@ -59,6 +96,7 @@ function ExerciseCard({
           <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-ocean-100 dark:bg-ocean-900/40 text-ocean-700 dark:text-ocean-300">
             {PLAN_CATEGORY_LABELS[ex.category] ?? ex.category}
           </span>
+          {videos.length > 0 && <Video className="w-3.5 h-3.5 text-brand-500 shrink-0" />}
         </div>
         {open ? (
           <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
@@ -109,6 +147,97 @@ function ExerciseCard({
               </span>
             </div>
           )}
+
+          {/* Видео */}
+          {(videos.length > 0 || canManageVideos) && (
+            <div className="pt-1">
+              <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+                Видео
+              </div>
+              <div className="space-y-1.5">
+                {videos.map((v) => (
+                  <div key={v.id} className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPlaying(v)}
+                      className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-ocean-50 dark:bg-ocean-900/30 text-ocean-700 dark:text-ocean-300 text-sm font-medium text-left hover:bg-ocean-100 dark:hover:bg-ocean-900/50 transition-colors min-w-0"
+                    >
+                      <Play className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{v.title || 'Видео'}</span>
+                    </button>
+                    {canManageVideos && (
+                      <button
+                        onClick={() => {
+                          if (confirm('Удалить это видео?')) deletePlanVideo(ex.id, v.id);
+                        }}
+                        className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        title="Удалить видео"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {canManageVideos && (
+                  <>
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="video/mp4,video/quicktime,video/webm,video/x-m4v"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFile(f);
+                      }}
+                    />
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-500 dark:text-slate-400 hover:border-brand-400 hover:text-brand-600 transition-colors w-full"
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Загружаем видео…
+                        </>
+                      ) : (
+                        <>
+                          <Video className="w-4 h-4" /> Добавить видео (MP4, MOV, WebM)
+                        </>
+                      )}
+                    </button>
+                    {uploadError && (
+                      <p className="text-xs text-red-500">{uploadError}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Просмотр видео */}
+      {playing && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setPlaying(null)}
+        >
+          <div
+            className="bg-slate-900 rounded-2xl overflow-hidden max-w-2xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+              <p className="font-bold text-white text-sm truncate">
+                {ex.name} — {playing.title || 'видео'}
+              </p>
+              <button
+                onClick={() => setPlaying(null)}
+                className="p-1.5 rounded-lg text-white hover:bg-white/10 shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <video src={playing.url} controls autoPlay className="w-full aspect-video bg-black" />
+          </div>
         </div>
       )}
     </div>
@@ -124,6 +253,7 @@ function PlanWorkoutInner() {
   const addWorkout = useAppStore((s) => s.addWorkout);
   const upsertExercises = useAppStore((s) => s.upsertExercises);
   const myWorkouts = useAppStore((s) => s.workouts);
+  const planVideos = useAppStore((s) => s.planVideos);
   const [date, setDate] = useState(todayISO());
   const [time, setTime] = useState('18:00');
   const [adding, setAdding] = useState(false);
@@ -144,7 +274,7 @@ function PlanWorkoutInner() {
   const existingCopy = findPlanCopy(myWorkouts, pw.id);
 
   const makeCopy = (d: string, t: string) => {
-    const { exercises, workout } = convertPlanWorkout(pw, d, t);
+    const { exercises, workout } = convertPlanWorkout(pw, d, t, planVideos);
     upsertExercises(exercises);
     addWorkout(workout);
     return workout;
