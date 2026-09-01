@@ -88,7 +88,7 @@ function PlanWeekInner() {
           <ClipboardCheck className="w-5 h-5 text-brand-500 shrink-0 mt-0.5" />
           <div className="text-sm text-slate-700 dark:text-slate-200">
             <span className="font-bold">Контрольная неделя.</span> Проведите оценку каждого
-            спортсмена по шкале 1–4 и при необходимости скорректируйте уровни L1/L2/L3.
+            спортсмена по шкале 1–4 — так видно, что группа освоила, а что стоит повторить.
           </div>
         </div>
       )}

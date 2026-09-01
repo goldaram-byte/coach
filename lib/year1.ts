@@ -148,6 +148,16 @@ export const findPlanCopy = (workouts: Workout[], planId: string): Workout | und
 
 // ---------- Конвертация в личный план тренера ----------
 
+/**
+ * Уровни, которые план предписывает всей группе на данном занятии
+ * (поле progression тренировки: 'L1', 'L1-L2', 'L2', 'L2-L3').
+ * Группа не делится — уровень единый и растёт по ходу года.
+ */
+export const progressionLevels = (progression: string): ('L1' | 'L2' | 'L3')[] => {
+  const lvls = (['L1', 'L2', 'L3'] as const).filter((l) => progression.includes(l));
+  return lvls.length ? lvls : ['L1'];
+};
+
 const CATEGORY_MAP: Record<string, CategoryId> = {
   joint_warmup: 'ofp',
   dynamic: 'ofp',
@@ -159,25 +169,35 @@ const CATEGORY_MAP: Record<string, CategoryId> = {
   psychology_recovery: 'psychology',
 };
 
-export const planExerciseToExercise = (pe: PlanExercise, durationMin: number): Exercise => ({
-  id: 'y1-' + pe.id,
-  name: pe.name,
-  category: CATEGORY_MAP[pe.category] ?? 'ofp',
-  stage: 'beginner',
-  description:
-    `Уровни сложности:\n• L1 — ${pe.levels.L1}\n• L2 — ${pe.levels.L2}\n• L3 — ${pe.levels.L3}` +
-    (pe.prerequisites.length
-      ? `\n\nПредварительно освоить: ${pe.prerequisites.join(', ')}`
-      : ''),
-  goal:
-    `Связь с кумитэ: ${pe.kumite_link}. Критерии качества: ${pe.quality_criteria.join(', ')}.`,
-  durationMin,
-  difficulty: 'beginner',
-  commonMistakes: pe.common_errors.join('; '),
-  simplifiedVariant: pe.levels.L1,
-  advancedVariant: pe.levels.L3,
-  videos: [],
-});
+export const planExerciseToExercise = (
+  pe: PlanExercise,
+  durationMin: number,
+  progression = 'L1'
+): Exercise => {
+  const lvls = progressionLevels(progression);
+  const execution =
+    lvls.length === 1
+      ? pe.levels[lvls[0]]
+      : `${pe.levels[lvls[0]]}; по мере освоения — ${pe.levels[lvls[lvls.length - 1]]}`;
+  return {
+    id: 'y1-' + pe.id,
+    name: pe.name,
+    category: CATEGORY_MAP[pe.category] ?? 'ofp',
+    stage: 'beginner',
+    description:
+      `Выполнение для всей группы: ${execution}.` +
+      (pe.prerequisites.length
+        ? `\n\nПредварительно освоить: ${pe.prerequisites.join(', ')}`
+        : ''),
+    goal: `Связь с кумитэ: ${pe.kumite_link}. Критерии качества: ${pe.quality_criteria.join(', ')}.`,
+    durationMin,
+    difficulty: 'beginner',
+    commonMistakes: pe.common_errors.join('; '),
+    simplifiedVariant: pe.levels.L1,
+    advancedVariant: pe.levels.L3,
+    videos: [],
+  };
+};
 
 const rand = () => Math.random().toString(36).slice(2, 8);
 
@@ -202,7 +222,7 @@ export const convertPlanWorkout = (
       durationMin: b.duration_min,
       exercises: ids.map((eid, ei) => {
         const pe = planExerciseById[eid];
-        if (pe && !exMap.has(eid)) exMap.set(eid, planExerciseToExercise(pe, per));
+        if (pe && !exMap.has(eid)) exMap.set(eid, planExerciseToExercise(pe, per, pw.progression));
         return {
           id: `we-y1-${pw.id}-${bi}-${ei}-${rand()}`,
           exerciseId: 'y1-' + eid,
@@ -219,7 +239,7 @@ export const convertPlanWorkout = (
       id: `wk-y1-${pw.id}-${rand()}`,
       name: `Неделя ${pw.week} · Занятие ${pw.session} — ${pw.theme}`,
       theme: pw.theme,
-      goal: `Стандартный план, раздел 1 (${pw.phase}). Рекомендуемый уровень: ${pw.progression}. ${pw.coach_note}`,
+      goal: `Стандартный план, раздел 1 (${pw.phase}). Уровень группы: ${pw.progression}. ${pw.coach_note}`,
       date,
       time,
       stage: 'beginner',

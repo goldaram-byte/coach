@@ -35,7 +35,7 @@ const RULES = [
   'Разминка всегда сверху вниз: шея → плечи → локти → кисти → позвоночник → тазобедренные → колени → голеностоп → стопы.',
   'В начале года доминирует ОФП; специфичность постепенно растёт.',
   'Сложные перемещения и свободное кумитэ не форсируются.',
-  'Уровни L1/L2/L3 выбираются индивидуально для каждого спортсмена.',
+  'Уровень сложности единый для всей группы и растёт по ходу года: L1 → L2 → L3.',
   'Качество движения важнее объёма; отказная работа не используется.',
   'Игровое взаимодействие предшествует полноценному соревновательному формату.',
 ];
@@ -70,7 +70,7 @@ export default function PlanHome() {
             Неделя {next.week} · Занятие {next.session}
           </h1>
           <p className="mt-1 text-ocean-100">
-            {next.theme} · {next.duration_min} мин · уровень {next.progression}
+            {next.theme} · {next.duration_min} мин · уровень группы {next.progression}
           </p>
           <Link
             href={`/plan-workout?id=${next.id}`}
@@ -120,7 +120,8 @@ export default function PlanHome() {
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl">
           Готовая годовая система: открывайте занятия по порядку и ведите тренировку прямо с
-          телефона. Уровни L1/L2/L3 подбираются каждому спортсмену индивидуально.
+          телефона. План единый для всей группы — сложность растёт по ходу года сама
+          (L1 → L2 → L3).
         </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-2">
           <Lock className="w-3 h-3" /> Единая методика клуба — изменению не подлежит
@@ -228,8 +229,8 @@ export default function PlanHome() {
         <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
           На неделях{' '}
           <span className="font-bold text-brand-600">{planAssessments.weeks.join(', ')}</span>{' '}
-          проводится оценка каждого спортсмена по шкале 1–4. По среднему баллу подбирается
-          уровень сложности: &lt;2.0 → L1 · 2.0–2.9 → L1/L2 · 3.0–3.5 → L2 · &gt;3.5 → L2/L3.
+          проводится оценка спортсменов по шкале 1–4 — так видно, что группа освоила, а что
+          стоит повторить, прежде чем двигаться дальше.
         </p>
         <div className="grid sm:grid-cols-2 gap-2 mb-4">
           {Object.entries(planAssessments.scale).map(([score, label]) => (

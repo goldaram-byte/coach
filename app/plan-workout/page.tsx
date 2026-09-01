@@ -25,13 +25,15 @@ import {
   phaseOfWeek,
   convertPlanWorkout,
   findPlanCopy,
+  progressionLevels,
   PLAN_BLOCK_LABELS,
   PLAN_CATEGORY_LABELS,
   PlanExercise,
 } from '@/lib/year1';
 
-function ExerciseCard({ ex }: { ex: PlanExercise }) {
+function ExerciseCard({ ex, progression }: { ex: PlanExercise; progression: string }) {
   const [open, setOpen] = useState(false);
+  const lvls = progressionLevels(progression);
   return (
     <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl overflow-hidden">
       <button
@@ -54,20 +56,15 @@ function ExerciseCard({ ex }: { ex: PlanExercise }) {
       </button>
       {open && (
         <div className="px-4 pb-4 space-y-3 text-sm">
-          <div className="grid sm:grid-cols-3 gap-2">
-            {(['L1', 'L2', 'L3'] as const).map((lvl) => (
-              <div
-                key={lvl}
-                className="bg-white dark:bg-slate-900/60 rounded-lg px-3 py-2"
-              >
-                <div className="text-[11px] font-bold text-brand-600 dark:text-brand-400 mb-0.5">
-                  {lvl}
-                </div>
-                <div className="text-xs text-slate-600 dark:text-slate-300">
-                  {ex.levels[lvl]}
-                </div>
-              </div>
-            ))}
+          <div className="bg-white dark:bg-slate-900/60 rounded-lg px-3 py-2.5">
+            <div className="text-[11px] font-bold text-brand-600 dark:text-brand-400 mb-0.5">
+              Как выполняет группа
+            </div>
+            <div className="text-sm text-slate-700 dark:text-slate-200">
+              {lvls.length === 1
+                ? ex.levels[lvls[0]]
+                : `${ex.levels[lvls[0]]} → по мере освоения: ${ex.levels[lvls[lvls.length - 1]]}`}
+            </div>
           </div>
           <div className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -182,7 +179,7 @@ function PlanWorkoutInner() {
           <Clock className="w-3.5 h-3.5" /> {pw.duration_min} мин
         </span>
         <span className="text-xs font-semibold text-brand-600 dark:text-brand-400">
-          Рекомендуемый уровень: {pw.progression}
+          Уровень группы: {pw.progression}
         </span>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1 mb-5">
@@ -274,7 +271,9 @@ function PlanWorkoutInner() {
               <div className="space-y-2 mt-2">
                 {b.exercise_ids.map((eid) => {
                   const ex = planExerciseById[eid];
-                  return ex ? <ExerciseCard key={eid} ex={ex} /> : null;
+                  return ex ? (
+                    <ExerciseCard key={eid} ex={ex} progression={pw.progression} />
+                  ) : null;
                 })}
               </div>
             )}
