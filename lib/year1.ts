@@ -58,9 +58,32 @@ export const planExerciseById: Record<string, PlanExercise> = Object.fromEntries
   planExercises.map((e) => [e.id, e])
 );
 
+/**
+ * Полная последовательность суставной разминки сверху вниз
+ * (шея → плечи → локти → кисти → позвоночник → таз → колени →
+ * голеностоп → стопы) + растяжка в конце. В тренировках плана она
+ * записана одним пунктом SU025 и разворачивается в этот список.
+ */
+export const JOINT_WARMUP_IDS: string[] = [
+  'SU001', 'SU002', 'SU003', // шея
+  'SU004', 'SU005', 'SU006', // плечи
+  'SU007', 'SU008',          // локти
+  'SU009', 'SU010',          // кисти
+  'SU011', 'SU012', 'SU013', // позвоночник
+  'SU014', 'SU015', 'SU016', 'SU017', 'SU018', // тазобедренные
+  'SU019',                   // колени
+  'SU020', 'SU021', 'SU022', // голеностоп
+  'SU023', 'SU024',          // стопы
+  'ST001', 'ST002', 'ST003', 'ST004', 'ST005', // растяжка
+];
+
+/** Разворачивает «Полный комплекс сверху вниз» в пошаговый список. */
+export const expandExerciseIds = (ids: string[]): string[] =>
+  ids.flatMap((id) => (id === 'SU025' ? JOINT_WARMUP_IDS : [id]));
+
 export const PLAN_BLOCK_LABELS: Record<string, string> = {
   organization: 'Организация',
-  joint_warmup: 'Суставная разминка',
+  joint_warmup: 'Суставная разминка и растяжка',
   dynamic_warmup: 'Динамическая разминка',
   general_physical: 'ОФП',
   special_physical: 'СФП',
@@ -72,6 +95,7 @@ export const PLAN_BLOCK_LABELS: Record<string, string> = {
 
 export const PLAN_CATEGORY_LABELS: Record<string, string> = {
   joint_warmup: 'Суставная разминка',
+  stretching: 'Растяжка',
   dynamic: 'Динамическая разминка',
   general_physical: 'ОФП',
   special_physical: 'СФП',
@@ -160,6 +184,7 @@ export const progressionLevels = (progression: string): ('L1' | 'L2' | 'L3')[] =
 
 const CATEGORY_MAP: Record<string, CategoryId> = {
   joint_warmup: 'ofp',
+  stretching: 'ofp',
   dynamic: 'ofp',
   general_physical: 'ofp',
   special_physical: 'sfp',
@@ -175,10 +200,16 @@ export const planExerciseToExercise = (
   progression = 'L1'
 ): Exercise => {
   const lvls = progressionLevels(progression);
-  const execution =
+  let execution =
     lvls.length === 1
       ? pe.levels[lvls[0]]
       : `${pe.levels[lvls[0]]}; по мере освоения — ${pe.levels[lvls[lvls.length - 1]]}`;
+  // «Полный комплекс» в режиме тренировки — пошаговый список с растяжкой
+  if (pe.id === 'SU025') {
+    execution =
+      'выполняйте по порядку сверху вниз:\n' +
+      JOINT_WARMUP_IDS.map((id, i) => `${i + 1}. ${planExerciseById[id]?.name ?? id}`).join('\n');
+  }
   return {
     id: 'y1-' + pe.id,
     name: pe.name,

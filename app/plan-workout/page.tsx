@@ -26,12 +26,21 @@ import {
   convertPlanWorkout,
   findPlanCopy,
   progressionLevels,
+  expandExerciseIds,
   PLAN_BLOCK_LABELS,
   PLAN_CATEGORY_LABELS,
   PlanExercise,
 } from '@/lib/year1';
 
-function ExerciseCard({ ex, progression }: { ex: PlanExercise; progression: string }) {
+function ExerciseCard({
+  ex,
+  progression,
+  index,
+}: {
+  ex: PlanExercise;
+  progression: string;
+  index: number;
+}) {
   const [open, setOpen] = useState(false);
   const lvls = progressionLevels(progression);
   return (
@@ -40,7 +49,10 @@ function ExerciseCard({ ex, progression }: { ex: PlanExercise; progression: stri
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
       >
-        <div className="min-w-0">
+        <div className="min-w-0 flex items-center gap-2.5">
+          <span className="w-6 h-6 rounded-lg bg-ocean-100 dark:bg-ocean-900/50 text-ocean-700 dark:text-ocean-300 text-xs font-bold flex items-center justify-center shrink-0">
+            {index}
+          </span>
           <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">
             {ex.name}
           </span>
@@ -269,10 +281,15 @@ function PlanWorkoutInner() {
             )}
             {b.exercise_ids && b.exercise_ids.length > 0 && (
               <div className="space-y-2 mt-2">
-                {b.exercise_ids.map((eid) => {
+                {expandExerciseIds(b.exercise_ids).map((eid, ei) => {
                   const ex = planExerciseById[eid];
                   return ex ? (
-                    <ExerciseCard key={eid} ex={ex} progression={pw.progression} />
+                    <ExerciseCard
+                      key={eid}
+                      ex={ex}
+                      progression={pw.progression}
+                      index={ei + 1}
+                    />
                   ) : null;
                 })}
               </div>

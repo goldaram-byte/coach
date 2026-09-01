@@ -233,7 +233,9 @@ function WorkoutRunInner() {
             <p className="text-xs font-semibold uppercase tracking-wide text-ocean-300 mb-1.5">
               Инструкция
             </p>
-            <p className="text-sm text-ocean-100 leading-relaxed">{exercise.description}</p>
+            <p className="text-sm text-ocean-100 leading-relaxed whitespace-pre-line">
+              {exercise.description}
+            </p>
             {current.notes && (
               <p className="text-sm text-brand-300 mt-2 font-medium">💡 {current.notes}</p>
             )}
