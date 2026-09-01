@@ -107,25 +107,33 @@ export default function PlanHome() {
         </div>
       )}
 
-      {/* Раздел 1 */}
+      {/* Этап НП по ФССП */}
       <div className="card p-6 mb-6 border-brand-200 dark:border-brand-800 bg-gradient-to-br from-brand-50/60 to-ocean-50/40 dark:from-brand-900/10 dark:to-ocean-900/10">
         <div className="flex items-center gap-2 mb-1">
           <Crown className="w-4 h-4 text-brand-500" />
           <span className="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">
-            Стандартный план · Раздел 1
+            Этап начальной подготовки · 1-й год
           </span>
         </div>
         <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-          Начальная подготовка — 1 год обучения (WKF Kumite)
+          План по федеральному стандарту (кумитэ)
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 max-w-2xl">
-          Готовая годовая система: открывайте занятия по порядку и ведите тренировку прямо с
-          телефона. План единый для всей группы — сложность растёт по ходу года сама
-          (L1 → L2 → L3).
+          Построен по ФССП по каратэ (приказ Минспорта № 966 от 14.11.2025): 3 занятия по
+          90 минут в неделю (4,5 ч), 52 недели. Открывайте занятия по порядку и ведите
+          тренировку прямо с телефона — план единый для всей группы.
         </p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-2">
-          <Lock className="w-3 h-3" /> Единая методика клуба — изменению не подлежит
-        </p>
+        <div className="flex items-center gap-3 flex-wrap mt-2">
+          <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+            <Lock className="w-3 h-3" /> Единая методика клуба — изменению не подлежит
+          </p>
+          <Link
+            href="/fssp"
+            className="text-xs font-bold text-ocean-600 dark:text-ocean-400 no-underline hover:underline"
+          >
+            Нормативы и документы этапа →
+          </Link>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
           {[
